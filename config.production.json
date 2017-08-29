@@ -1,0 +1,23 @@
+{
+	"url": "http://ghostinazurewebapp.azurewebsites.net",
+    "database": {
+        "client": "sqlite3",
+        "connection": {
+            "filename": "content/data/ghost.db"
+        }
+    },
+    "auth": {
+        "type": "password"
+    },
+    "paths": {
+        "contentPath": "content/"
+    },
+    "logging": {
+        "level": "info",
+		"path": "content/logs/",
+        "rotation": {
+            "enabled": true
+        },
+        "transports": ["file", "stdout"]
+    }
+}
