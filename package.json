@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"ghost": "1.0.0",
+		"ghost": "^1.8.0",
 		"knex-migrator": "^2.1.6"
 	},
 	"engines": {
