@@ -1,9 +1,13 @@
 {
 	"dependencies": {
-		"ghost": "^1.8.0",
-		"knex-migrator": "^2.1.6"
+		"ghost": "^1.8.4",
+		"knex-migrator": "^2.1.6",
+		"replace-in-file": "^2.6.4"
 	},
 	"engines": {
 		"node": ">=6.11.1 <7"
+	},
+	"scripts": {
+		"postinstall": "node postinstall.js"
 	}
 }
