@@ -2,11 +2,11 @@ var logging = require('ghost-ignition').logging();
 var config = require('ghost/core/server/config');
 var replace = require('replace-in-file');
 
-// only do post-install if we're running in Azure
+// we do different post-install processes depending on where we're deployed and the environment; first see if we're in Azure
 if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMULATED) && (process.env.WEBSITE_SITE_NAME)) {
 	logging.info('Appear to be running in Azure, performing post-install for ' + config.get('env'));
 
-	// update config.production.json to match actual site name
+	// update config.production.json to match where we're deployed
 	logging.info('Updating config.production.json to match site name ' + process.env.WEBSITE_SITE_NAME.toLowerCase());
 	var options = {
 		files: __dirname + '\\config.production.json',
@@ -15,7 +15,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 	};
 	replace(options);
 
-	// migrate database to latest version
+	// ensure database is up to date by migrating it to the latest version; if it's already on the latest this will do nothing
 	logging.info('Migrating database to latest version');
 	var KnexMigrator = require('knex-migrator');
 	knexMigrator = new KnexMigrator({
@@ -27,10 +27,12 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 			logging.error('Migration failed: ' + err.message);
 		});
 } else {
+	// not running in Azure, so we should be running locally, only do post-install if we're not in production; if we're in
+	// production, but running locally, assume the user is doing something specific and is handling things themselves
 	if (config.get('env') !== 'production') {
 		logging.info('Don\'t appear to be running in Azure, performing post-install for ' + config.get('env'));
 
-		// migrate database to latest version
+		// ensure database is up to date by migrating it to the latest version; if it's already on the latest this will do nothing
 		logging.info('Migrating database to latest version');
 		var KnexMigrator = require('knex-migrator');
 		knexMigrator = new KnexMigrator({
