@@ -1,5 +1,8 @@
 {
 	"url": "http://ghostinazurewebapp.azurewebsites.net",
+	"admin": {
+		"url": "https://ghostinazurewebapp.azurewebsites.net"
+	},
     "database": {
         "client": "sqlite3",
         "connection": {
