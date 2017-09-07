@@ -18,10 +18,10 @@ knexMigrator.reset()
 	.then(function onResetSuccess() {
 		knexMigrator.init()
 			.catch(function onInitError(err) {
-				console.log('Init failed: ' + err.message);
+				logging.error('Init failed: ' + err.message);
 			});
 		return null;
 	})
 	.catch(function onResetError(err) {
-		console.log('Reset failed: ' + err.message);
+		logging.error('Reset failed: ' + err.message);
 	});
