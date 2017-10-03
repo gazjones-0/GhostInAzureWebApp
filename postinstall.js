@@ -1,4 +1,5 @@
 var config = require('ghost/core/server/config');
+var deasync = require('deasync');
 var fs = require('fs');
 var knexMigrator = require('knex-migrator');
 var logging = require('ghost-ignition').logging();
@@ -7,7 +8,7 @@ var replaceInFile = require('replace-in-file');
 var strReplaceAll = require('str-replace-all');
 var uglifyJs = require('uglify-es');
 
-// to hold the generated server-cache
+// to hold the generated server cache
 var serverCacheItems = [];
 var serverCacheFilesProcessed = [];
 
@@ -18,7 +19,6 @@ var serverJsPath = path.resolve(__dirname, 'server.js');
 var serverCacheJsPath = path.resolve(__dirname, 'server.cache.js');
 var serverTemplateJsPath = path.resolve(__dirname, 'server.template.js');
 var ghostPath = path.resolve(__dirname, 'node_modules/ghost/index.js');
-var serverJs = path.resolve
 
 // we do different post-install processes depending on where we're deployed and the environment; first see if we're in Azure
 if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMULATED) && (process.env.WEBSITE_SITE_NAME)) {
@@ -49,20 +49,32 @@ function ensureProductionConfigMatchesAzureDeployment() {
 		from: /ghostinazurewebapp[.]azurewebsites[.]net/g,
 		to: process.env.WEBSITE_SITE_NAME.toLowerCase() + '.azurewebsites.net'
 	};
-	replaceInFile(options);
+	replaceInFile.sync(options);
+	logging.info('Updated config.production.json to match site name ' + process.env.WEBSITE_SITE_NAME.toLowerCase());
 };
 
 // migrates database to the latest version; if it's already on the latest this will do nothing
 function ensureDatabaseHasBeenMigratedToLatestVersion() {
 	logging.info('Migrating database to latest version');
+	var migrationCompleted = false;
 	var migrator = new knexMigrator({
 		knexMigratorFilePath: knexMigratorPath
 	});
 
 	migrator.migrate()
+		.then(function () {
+			logging.info('Migrated database to latest version');
+			migrationCompleted = true;
+		})
 		.catch(function onMigrateError(err) {
 			logging.error('Migration failed: ' + err.message);
+			migrationCompleted = true;
 		});
+
+	// for some reason the migration fails intermittently if we try and create the server cache whilst
+	// the migration hasn't completed (specifically, if we try and compress all the files); so we wait
+	// until the migration has completed before we do any further processing
+	deasync.loopWhile(function(){return !migrationCompleted;});
 };
 
 // creates server.js from server.template.js which performs Azure-specific setup and then starts ghost using the script that comes with ghost
@@ -91,12 +103,15 @@ function createServerJs() {
 		+ '\n'
 		+ ghost;
 	fs.writeFileSync(serverJsPath, server);
+
+	logging.info('Created server.js');
 };
 
 // creates server.cache.js from all the javascript files in the deployment to improve startup performance, which
 // otherwise can be extremely slow in Azure (especially in Free or Shared instances) due to the disk speed
 function createServerCacheJs() {
 	logging.info('Creating server.cache.js');
+
 	// process the server.js file which will then add anything it depends on to the cache
 	processFileForServerCache(path.parse(serverJsPath).dir, path.parse(serverJsPath).base);
 	addFilesThatCannotBeDetectedToServerCache();
@@ -105,6 +120,8 @@ function createServerCacheJs() {
 		'var serverCache = [];\n'
 		+ serverCacheItems.join('\n');
 	fs.writeFileSync(serverCacheJsPath, serverCache);
+
+	logging.info('Created server.cache.js');
 };
 
 // processes a file for the server cache
@@ -133,9 +150,7 @@ function processFileForServerCache(dir, file) {
 		var compressedContent = uglifyJs.minify(
 			content,
 			{
-				// enabling compression gets the cache size about 3 percent lower, but increases
-				// the post-install time and causes the knex migration to fail for some reason
-				compress: false,
+				compress: true,
 				mangle: true
 			});
 		compressionSucceeded = true;
@@ -375,7 +390,7 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	// ghost knex migrator config
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost'), 'MigratorConfig' + '\')', 'MigratorConfig');
 
-	// ghost models
+	// ghost default scheduler
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'adapters', 'scheduling'), 'SchedulingDefault' + '\'', 'SchedulingDefault');
 
 	// ghost internal apps
