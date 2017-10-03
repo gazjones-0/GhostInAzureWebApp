@@ -1,7 +1,9 @@
 var fs = require('fs');
 
 // load our cache
-var serverCache = require('./server.cache');
+eval(require('zlib').gunzipSync(fs.readFileSync(require('path').resolve(__dirname, 'server.cache.js.gz'))).toString());
+
+// save the original readFileSync that we'll override with our caching version
 var originalReadFileSync = fs.readFileSync;
 
 // caching version of readFileSync that avoids the filesystem if the file is in the cache

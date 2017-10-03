@@ -7,6 +7,7 @@ var path = require('path');
 var replaceInFile = require('replace-in-file');
 var strReplaceAll = require('str-replace-all');
 var uglifyJs = require('uglify-es');
+var zlib = require('zlib');
 
 // to hold the generated server cache
 var serverCacheItems = [];
@@ -17,6 +18,7 @@ var configProductionJsonPath = path.resolve(__dirname, 'config.production.json')
 var knexMigratorPath = path.resolve(__dirname, 'node_modules/ghost');
 var serverJsPath = path.resolve(__dirname, 'server.js');
 var serverCacheJsPath = path.resolve(__dirname, 'server.cache.js');
+var serverCacheJsZippedPath = path.resolve(__dirname, 'server.cache.js.gz');
 var serverTemplateJsPath = path.resolve(__dirname, 'server.template.js');
 var ghostPath = path.resolve(__dirname, 'node_modules/ghost/index.js');
 
@@ -56,7 +58,8 @@ function ensureProductionConfigMatchesAzureDeployment() {
 // migrates database to the latest version; if it's already on the latest this will do nothing
 function ensureDatabaseHasBeenMigratedToLatestVersion() {
 	logging.info('Migrating database to latest version');
-	var migrationCompleted = false;
+
+	var migrationFinished = false;
 	var migrator = new knexMigrator({
 		knexMigratorFilePath: knexMigratorPath
 	});
@@ -64,17 +67,17 @@ function ensureDatabaseHasBeenMigratedToLatestVersion() {
 	migrator.migrate()
 		.then(function () {
 			logging.info('Migrated database to latest version');
-			migrationCompleted = true;
+			migrationFinished = true;
 		})
 		.catch(function onMigrateError(err) {
 			logging.error('Migration failed: ' + err.message);
-			migrationCompleted = true;
+			migrationFinished = true;
 		});
 
 	// for some reason the migration fails intermittently if we try and create the server cache whilst
 	// the migration hasn't completed (specifically, if we try and compress all the files); so we wait
 	// until the migration has completed before we do any further processing
-	deasync.loopWhile(function(){return !migrationCompleted;});
+	deasync.loopWhile(function(){return !migrationFinished;});
 };
 
 // creates server.js from server.template.js which performs Azure-specific setup and then starts ghost using the script that comes with ghost
@@ -117,12 +120,47 @@ function createServerCacheJs() {
 	addFilesThatCannotBeDetectedToServerCache();
 	serverCacheItems.push('module.exports = serverCache;');
 	var serverCache =
-		'var serverCache = [];\n'
-		+ serverCacheItems.join('\n');
+		'var serverCache = [];'
+		+ serverCacheItems.join('');
 	fs.writeFileSync(serverCacheJsPath, serverCache);
 
 	logging.info('Created server.cache.js');
+
+	// now create the zipped version
+	createZippedServerCacheJs();
 };
+
+// creates a zipped version of the server cache to try and further improve the startup time
+function createZippedServerCacheJs() {
+	logging.info('Creating server.cache.js.gz');
+
+	var gzip = zlib.createGzip({
+		// best compression gives a marginally smaller file
+		level: 9
+		// anything other than default strategy increases file size
+	});
+	var input = fs.createReadStream(serverCacheJsPath);
+	var output = fs.createWriteStream(serverCacheJsZippedPath);
+	var compressionFinished = false;
+	input.pipe(gzip)
+		.on('error', function () {
+			logging.error('Failed to create server.cache.js.gz');
+			compressionFinished = true;
+		})
+		.pipe(output)
+		.on('finish', function () {
+			logging.info('Created server.cache.js.gz');
+			compressionFinished = true;
+		})
+		.on('error', function () {
+			logging.error('Failed to create server.cache.js.gz');
+			compressionFinished = true;
+		});
+
+	// wait for compression to complete
+	deasync.loopWhile(function(){return !compressionFinished;});
+	logging.info('Created server.cache.js.gz');
+}
 
 // processes a file for the server cache
 function processFileForServerCache(dir, file) {
