@@ -1,6 +1,6 @@
-# [Ghost (1.10.0)](https://github.com/TryGhost/Ghost)
+# [Ghost (1.11.0)](https://github.com/TryGhost/Ghost)
 
-Ghost 1.x ready for deployment to an Azure Windows web app.
+Ghost ready for deployment to an Azure Windows web app -- there's a one-click deployment button further down the page, but you should try and read the next few sections first.
 
 ## Before you deploy we have to talk about startup performance...
 
@@ -39,14 +39,14 @@ Azure now supports Linux app service plans so it'd be an interesting experiment 
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
-Note that if deploying to a basic or lower plan the deployment might fail (it doesn't seem to always do it) - generally the app still seems to work, but I'd recommend that if deployment doesn't succeed, deploy to a standard app service and then downgrade the plan. The issue appears to be the amount of time it takes to install all the node modules and run the postinstall script (which gets automatically run during deployment).
+Note that if deploying to a basic or lower plan the deployment might fail (it generally does but doesn't always) - the app still appears to work, but I'd recommend that if deployment doesn't succeed, deploy to a standard app service and then downgrade the plan. The issue appears to be the amount of time it takes to install all the node modules and run the postinstall script (which gets automatically run during deployment).
 
 ### The postinstall.js script
 
 This is run automatically as part of deployment, and does the following:
 
-* Updates the website url in `config.production.json` to match where it's deployed
-* Ensures the database has been migrated to the latest version
+* Updates the website url in `config.production.json` to match where it's deployed; the config in the repository is set to `ghostinazurewebapp.azurewebsites.net` so the script will change this to match whatever you named it during deployment
+* Ensures the database has been migrated to the latest version (might be required if Ghost has been upgraded)
 * Creates `server.js` from `server.template.js`
 * Creates the cache
 
@@ -62,25 +62,19 @@ When `server.js` is created, the contents of the Ghost startup script are copied
 
 #### dbinit.js
 
-Completely re-initialises the database; you can run this against the production database in Azure with the following command from the console:
+Completely re-initialises the database if you want to reset everything back to as it would be after a fresh install; you can run this against the production database in Azure with the following command from the console (note the `set` command before the `node` command; by default `node_env` isn't set in the console):
 
 ```set node_env=production&node dbinit.js```
 
-Note the `set` command before the `node` command; by default `node_env` isn't set in the console.
-
 #### dbmigrate.js
 
-Migrates the database to the latest version; you can run this against the production database in Azure with the following command from the console:
+Migrates the database to the latest version if for some reason you need to do this manually; you can run this against the production database in Azure with the following command from the console (note the `set` command before the `node` command; by default `node_env` isn't set in the console):
 
 ```set node_env=production&node dbmigrate.js```
 
-Note the `set` command before the `node` command; by default `node_env` isn't set in the console.
-
 ## Running locally
 
-Download the repository, do a `yarn install` to get all the modules and then run it by:
-
-```node server.js```
+Download the repository, do a `yarn install` to get all the modules and then run it by `node server.js`.
 
 ## ToDo
 
