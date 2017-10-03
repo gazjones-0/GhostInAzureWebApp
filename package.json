@@ -1,5 +1,6 @@
 {
 	"dependencies": {
+		"deasync": "^0.1.10",
 		"ghost": "^1.10.0",
 		"knex-migrator": "^2.1.6",
 		"replace-in-file": "^3.0.0-beta.2",
