@@ -1,4 +1,4 @@
-# [Ghost (1.11.0)](https://github.com/TryGhost/Ghost)
+# [Ghost (1.11.1)](https://github.com/TryGhost/Ghost)
 
 Ghost ready for deployment to an Azure Windows web app -- there's a one-click deployment button further down the page, but you should try and read the next few sections first.
 
