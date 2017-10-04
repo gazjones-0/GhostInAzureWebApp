@@ -21,6 +21,7 @@ var serverCacheJsPath = path.resolve(__dirname, 'server.cache.js');
 var serverCacheJsZippedPath = path.resolve(__dirname, 'server.cache.js.gz');
 var serverTemplateJsPath = path.resolve(__dirname, 'server.template.js');
 var ghostPath = path.resolve(__dirname, 'node_modules/ghost/index.js');
+var serverCacheVariableName = 's';	// use a single letter to minimize the file size
 
 // we do different post-install processes depending on where we're deployed and the environment; first see if we're in Azure
 if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMULATED) && (process.env.WEBSITE_SITE_NAME)) {
@@ -118,9 +119,9 @@ function createServerCacheJs() {
 	// process the server.js file which will then add anything it depends on to the cache
 	processFileForServerCache(path.parse(serverJsPath).dir, path.parse(serverJsPath).base);
 	addFilesThatCannotBeDetectedToServerCache();
-	serverCacheItems.push('module.exports = serverCache;');
+	serverCacheItems.push('module.exports = ' + serverCacheVariableName + ';');
 	var serverCache =
-		'var serverCache = [];'
+		'var ' + serverCacheVariableName + ' = [];'
 		+ serverCacheItems.join('');
 	fs.writeFileSync(serverCacheJsPath, serverCache);
 
@@ -159,18 +160,12 @@ function createZippedServerCacheJs() {
 
 	// wait for compression to complete
 	deasync.loopWhile(function(){return !compressionFinished;});
-	logging.info('Created server.cache.js.gz');
 }
 
 // processes a file for the server cache
 function processFileForServerCache(dir, file) {
-	// we're generating the server cache, so ignore any attemps to process it
+	// ignore any attemps to process the cache we're generating or the server file
 	if (path.resolve(dir, file) === serverCacheJsPath) {
-		return;
-	}
-
-	// don't cache .json (some files will require these directly)
-	if (path.resolve(dir, file).endsWith('.json')) {
 		return;
 	}
 
@@ -180,7 +175,7 @@ function processFileForServerCache(dir, file) {
 		return;
 	}
 
-	// add this file to the cache, but try and compress it to minimize the cache size
+	// try and compress this file to minimize the cache size
 	var content = fs.readFileSync(path.resolve(dir, file), 'utf8');
 	var compressionSucceeded = false;
 	try
@@ -195,12 +190,27 @@ function processFileForServerCache(dir, file) {
 	} catch (err) {
 		// do nothing; uglify can't do all files so for any it can't we'll just add the file as-is
 	}
-	if ((compressionSucceeded === true) && (!compressedContent.error)) {
-		serverCacheItems.push('serverCache[\'' + convertStringToCode(path.resolve(dir, file)) + '\'] = \'' + convertStringToCode(compressedContent.code) + '\';');
-	} else {
-		serverCacheItems.push('serverCache[\'' + convertStringToCode(path.resolve(dir, file)) + '\'] = \'' + convertStringToCode(content) + '\';');
+
+	// we use the full path as the array index, but to save space we remove anything that'll be the same for every entry and remove the extension
+	var arrayEntry = path.resolve(dir, file);
+	arrayEntry = arrayEntry.replace(path.resolve(__dirname, 'node_modules') + path.sep, '');
+	if (arrayEntry.endsWith('.js')) {
+		arrayEntry = arrayEntry.substr(0, arrayEntry.length - 3);
 	}
-	serverCacheFilesProcessed[path.resolve(dir, file)] = path.resolve(dir, file);
+
+	// don't cache .json (some files will require these directly)
+
+	// don't add .json (some files will require these directly) or the server file
+	// itself to the cache, but we'll still walk any dependencies they have
+	if (!path.resolve(dir, file).endsWith('.json') && !(path.resolve(dir, file) === serverJsPath)) {
+		// add the compressed file (or the uncompressed one if we couldn't compress it)
+		if ((compressionSucceeded === true) && (!compressedContent.error)) {
+			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\'] = \'' + convertStringToCode(compressedContent.code) + '\';');
+		} else {
+			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\'] = \'' + convertStringToCode(content) + '\';');
+		}
+		serverCacheFilesProcessed[path.resolve(dir, file)] = path.resolve(dir, file);
+	}
 
 	// do a crude search for require statements to add dependencies to the cache; this isn't perfect but works for vast majority of cases
 	content.replace(/require\s*\(\s*(__dirname \+ '.*)'\s*\)/g, function (match, requirePath) { processRequire(dir, match, requirePath); } );
