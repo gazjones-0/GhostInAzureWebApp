@@ -95,7 +95,7 @@ function createServerJs() {
 	ghost = strReplaceAll('require(\'.\\', 'require(\'ghost\\', ghost);
 	ghost = strReplaceAll('require(\'./', 'require(\'ghost/', ghost);
 	if (ghost.indexOf('ghost()') >= 0) {
-		ghost = ghost.substring(0, ghost.indexOf('ghost()')) + 'require(\'./server.cache.modulePath\');\n' + ghost.substring(ghost.indexOf('ghost()'));
+		ghost = ghost.substring(0, ghost.indexOf('ghost()')) + 'require(\'./server.cache.modulePath.generator\');\n' + ghost.substring(ghost.indexOf('ghost()'));
 	} else {
 		logging.error('Can\'t find ghost() in startup file, unable to create modulePath cache.');
 	}
@@ -173,6 +173,9 @@ function createZippedServerCacheJs() {
 
 function createServerCacheModulePathJs() {
 	logging.info('Creating server.cache.modulePath.js');
+	if (!process.version.startsWith('6.')) {
+		logging.error('Unsupported node version - server.cache.modulePath may not work correctly');
+	}
 	fs.writeFileSync(serverCacheModulePathJs, fs.readFileSync(serverCacheModulePathTemplateJs, 'utf8'));
 	logging.info('Created server.cache.modulePath.js');
 }
