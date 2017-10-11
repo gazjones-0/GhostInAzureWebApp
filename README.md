@@ -8,14 +8,12 @@ When I first deployed Ghost, the site took a while to startup, which I put down 
 
 I tried do improve this with some caching (see later for more details on this), with limited success -- I did some (very) quick tests of start time by restarting the web app, browsing to the site and then looking at what Ghost records the boot time as in the log:
 
-* Free - with caching around 17-20s (without cache around 20-25s)
-* Shared - with caching around 14-20s (without cache around 20-25s)
-* Basic - with caching around 6-7s (without cache around 30s)
-* Standard - with caching around 6-7s (without cache around 30s)
+* Free - with caching around 10-12s (17-20s after a deployment; without caching around 20-25s)
+* Shared - with caching around 8-10s (14-20s after a deployment; without cache around 20-25s)
+* Basic - with caching around 6-7s (6-7s after a deployment; without cache around 30s)
+* Standard - with caching around 6-7s (6-7s after a deployment; without cache around 30s)
 
 The startup times for basic+ without caching were a bit surprising -- my guess is free and shared benefit from underlying infrastructure being in continual use whilst in basic and higher you have an additional hit of fresh resources being spun up; of course, basic+ bring other benefits not least that you can enable "always on", and the caching doesn't get you much in free or shared (my guess is the underlying infrastructure just isn't that powerful and the cache removes one bottleneck just to run into another).
-
-I've got access to a standard app service plan that's always on so the occasional recycle is something I can live with.
 
 ## Potential workaround for slow startup times
 
@@ -29,9 +27,13 @@ This improved it a bit, but I did end up with an 80M cache, so I played with web
 
 So instead I knocked out a crude dependency walker that worked out the modules Ghost loads at startup and just cached those (about a 14M cache as I recall); then I minified everything when building the cache (about a 7M cache) and then finally I tried gzipping it as well (about 1.4M zipped).
 
-There are probably some other things that could be tried to improve performance, but, whilst it's not ideal, I can live with the occasioanl 6-7s startup time (I've a standard service plan I can run it in) and I'm not really convinced things could be significantly improved without Microsoft looking at the underlying web app file system (which appears to be the fundamental issue, and ) -- my probably 5+ year old dev machine starts Ghost in about 2s with my caching version... also, after I'd done this, I found some reports of Azure function suffering from a similar issue that they solved in a similar way (see <https://github.com/Azure/azure-functions-pack>) which leads me to suspect a similar root cause for web apps.
+Even with this though it was still slow, so I looked further node's module loader internals and found that it can do a lot of directory traversing and processing (via `stat`) to work out the actual file to load; it builds a cache as it does this, but that won't help on a cold start, and, as it involved the disk, was likely another source of slowness in Azure, so on the first run of the app, it lets everything load in, and then saves the cache to disk; on subsequent app loads it loads the cache in first which means node shouldn't need to do any disk searching.
 
-I've folded this into the master branch but you can find the original experiment on the [cacheFilesInMemory](https://github.com/gazooka/GhostInAzureWebApp/tree/cacheFilesInMemory) branch if you're interested.
+I freely admit that this is pretty dirty and hacky (not to mention tied to the node version in use), but it has a noticeable effect on subsequent app loads, so I've kept this in.
+
+Whilst this isn't ideal, I can live with the 6-7s startup time on deployment / Ghost version upgrade (I've access to a standard service plan I can run it in), and I'm not really convinced things could be significantly improved without Microsoft looking at the underlying web app file system (which appears to be the fundamental issue) -- my probably 5+ year old dev machine starts Ghost in about 2s (1.5s on subsequent loads) with my caching version... also, after I'd done this, I found some reports of Azure function suffering from a similar issue that they solved in a similar way (see <https://github.com/Azure/azure-functions-pack>) which leads me to suspect a similar root cause for web apps.
+
+I've folded this into the master branch but you can find the original experiment on the [cacheFilesInMemory](https://github.com/gazooka/GhostInAzureWebApp/tree/cacheFilesInMemory) and [preloadModulePathCache](https://github.com/gazooka/GhostInAzureWebApp/tree/preloadModulePathCache) branches if you're interested.
 
 Azure now supports Linux app service plans so it'd be an interesting experiment to run Ghost in one of these and see if it has the same issue.
 
@@ -39,7 +41,7 @@ Azure now supports Linux app service plans so it'd be an interesting experiment 
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
-Note that if deploying to a basic or lower plan the deployment might fail (it generally does but doesn't always) - the app still appears to work, but I'd recommend that if deployment doesn't succeed, deploy to a standard app service and then downgrade the plan. The issue appears to be the amount of time it takes to install all the node modules and run the postinstall script (which gets automatically run during deployment).
+Note that if deploying to a basic or lower plan the deployment might fail (it sometimes does, it sometimes doesn't) - the app still appears to work, but I'd recommend that if deployment doesn't succeed, then either keep re-deploying it until it succeeds or deploy to a standard app service and then downgrade the plan. The issue appears to be the amount of time it takes to install all the node modules and run the postinstall script (which gets automatically run during deployment), and I think sometimes the underlying infrastructure gets recycled in the middle of the deployment.
 
 ### The postinstall.js script
 
