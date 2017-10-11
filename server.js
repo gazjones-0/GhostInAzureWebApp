@@ -7,6 +7,9 @@
 var fs = require('fs');
 var path = require('path');
 
+// load our module path cache
+require('./server.cache.modulePath');
+
 // load our cache
 eval(require('zlib').gunzipSync(fs.readFileSync(path.resolve(__dirname, 'server.cache.js.gz'))).toString());
 
@@ -62,6 +65,7 @@ utils = require('ghost/core/server/utils');
 parentApp = express();
 
 debug('Initialising Ghost');
+require('./server.cache.modulePath');
 ghost().then(function (ghostServer) {
     // Mount our Ghost instance on our desired subdirectory path if it exists.
     parentApp.use(utils.url.getSubdir(), ghostServer.rootApp);

@@ -19,6 +19,8 @@ var knexMigratorPath = path.resolve(__dirname, 'node_modules/ghost');
 var serverJsPath = path.resolve(__dirname, 'server.js');
 var serverCacheJsPath = path.resolve(__dirname, 'server.cache.js');
 var serverCacheJsZippedPath = path.resolve(__dirname, 'server.cache.js.gz');
+var serverCacheModulePathJs = path.resolve(__dirname, 'server.cache.modulePath.js');
+var serverCacheModulePathTemplateJs = path.resolve(__dirname, 'server.cache.modulePath.template.js');
 var serverTemplateJsPath = path.resolve(__dirname, 'server.template.js');
 var ghostPath = path.resolve(__dirname, 'node_modules/ghost/index.js');
 var serverCacheVariableName = 's';	// use a single letter to minimize the file size
@@ -30,6 +32,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 	ensureDatabaseHasBeenMigratedToLatestVersion();
 	createServerJs();
 	createServerCacheJs();
+	createServerCacheModulePathJs();
 } else {
 	// not running in Azure, so we should be running locally, only do post-install if we're not in production; if we're in
 	// production, but running locally, assume the user is doing something specific and is handling things themselves
@@ -38,6 +41,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 		ensureDatabaseHasBeenMigratedToLatestVersion();
 		createServerJs();
 		createServerCacheJs();
+		createServerCacheModulePathJs();
 	} else {
 		logging.warn('Don\'t appear to be running in Azure, skipping post-install as environment is currently ' + config.get('env'));
 		logging.warn('When repo is deployed to Azure the database in Azure will be automatically migrated to the latest version so you don\'t need to; if you still wish to migrate the local database to the latest version use node dbmigrate.js');
@@ -90,6 +94,11 @@ function createServerJs() {
 	var ghost = fs.readFileSync(ghostPath, 'utf8');
 	ghost = strReplaceAll('require(\'.\\', 'require(\'ghost\\', ghost);
 	ghost = strReplaceAll('require(\'./', 'require(\'ghost/', ghost);
+	if (ghost.indexOf('ghost()') >= 0) {
+		ghost = ghost.substring(0, ghost.indexOf('ghost()')) + 'require(\'./server.cache.modulePath\');\n' + ghost.substring(ghost.indexOf('ghost()'));
+	} else {
+		logging.error('Can\'t find ghost() in startup file, unable to create modulePath cache.');
+	}
 
 	// create file from the template
 	var server = fs.readFileSync(serverTemplateJsPath, 'utf8');
@@ -119,9 +128,9 @@ function createServerCacheJs() {
 	// process the server.js file which will then add anything it depends on to the cache
 	processFileForServerCache(path.parse(serverJsPath).dir, path.parse(serverJsPath).base);
 	addFilesThatCannotBeDetectedToServerCache();
-	serverCacheItems.push('module.exports = ' + serverCacheVariableName + ';');
+	serverCacheItems.push('module.exports=' + serverCacheVariableName + ';');
 	var serverCache =
-		'var ' + serverCacheVariableName + ' = [];'
+		'var ' + serverCacheVariableName + '=[];'
 		+ serverCacheItems.join('');
 	fs.writeFileSync(serverCacheJsPath, serverCache);
 
@@ -160,6 +169,12 @@ function createZippedServerCacheJs() {
 
 	// wait for compression to complete
 	deasync.loopWhile(function(){return !compressionFinished;});
+}
+
+function createServerCacheModulePathJs() {
+	logging.info('Creating server.cache.modulePath.js');
+	fs.writeFileSync(serverCacheModulePathJs, fs.readFileSync(serverCacheModulePathTemplateJs, 'utf8'));
+	logging.info('Created server.cache.modulePath.js');
 }
 
 // processes a file for the server cache
@@ -205,9 +220,9 @@ function processFileForServerCache(dir, file) {
 	if (!path.resolve(dir, file).endsWith('.json') && !(path.resolve(dir, file) === serverJsPath)) {
 		// add the compressed file (or the uncompressed one if we couldn't compress it)
 		if ((compressionSucceeded === true) && (!compressedContent.error)) {
-			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\'] = \'' + convertStringToCode(compressedContent.code) + '\';');
+			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(compressedContent.code) + '\';');
 		} else {
-			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\'] = \'' + convertStringToCode(content) + '\';');
+			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(content) + '\';');
 		}
 		serverCacheFilesProcessed[path.resolve(dir, file)] = path.resolve(dir, file);
 	}

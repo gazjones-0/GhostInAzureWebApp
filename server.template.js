@@ -1,6 +1,9 @@
 var fs = require('fs');
 var path = require('path');
 
+// load our module path cache
+require('./server.cache.modulePath');
+
 // load our cache
 eval(require('zlib').gunzipSync(fs.readFileSync(path.resolve(__dirname, 'server.cache.js.gz'))).toString());
 
