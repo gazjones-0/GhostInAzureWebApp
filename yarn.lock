@@ -1360,9 +1360,9 @@ ghost-storage-base@0.0.1:
   dependencies:
     moment "^2.17.1"
 
-ghost@^1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/ghost/-/ghost-1.13.0.tgz#6daabf09425123f26fea4ee87b7e092994434085"
+ghost@^1.14.1:
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/ghost/-/ghost-1.14.1.tgz#95732a7861bab5c0e5d7a7253457f8b1385a9df4"
   dependencies:
     amperize "0.3.5"
     analytics-node "2.4.1"
@@ -1398,7 +1398,7 @@ ghost@^1.13.0:
     intl-messageformat "1.3.0"
     jsonpath "0.2.12"
     knex "0.12.9"
-    knex-migrator "2.1.6"
+    knex-migrator "2.1.7"
     lodash "4.17.4"
     markdown-it "8.4.0"
     markdown-it-footnote "3.0.1"
@@ -2019,9 +2019,9 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-knex-migrator@2.1.6, knex-migrator@^2.1.6:
-  version "2.1.6"
-  resolved "https://registry.yarnpkg.com/knex-migrator/-/knex-migrator-2.1.6.tgz#942f029535e6e178a5642bd4527262fb046f82fb"
+knex-migrator@2.1.7, knex-migrator@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/knex-migrator/-/knex-migrator-2.1.7.tgz#ccbca05b6a1deca5a5750786c479f206b1c1b1ee"
   dependencies:
     bluebird "^3.4.6"
     commander "2.9.0"
