@@ -65,7 +65,7 @@ utils = require('ghost/core/server/utils');
 parentApp = express();
 
 debug('Initialising Ghost');
-require('./server.cache.modulePath');
+require('./server.cache.modulePath.generator');
 ghost().then(function (ghostServer) {
     // Mount our Ghost instance on our desired subdirectory path if it exists.
     parentApp.use(utils.url.getSubdir(), ghostServer.rootApp);
