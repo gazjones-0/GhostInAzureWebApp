@@ -173,7 +173,7 @@ function createZippedServerCacheJs() {
 
 function createServerCacheModulePathJs() {
 	logging.info('Creating server.cache.modulePath.js');
-	if (!process.version.startsWith('6.')) {
+	if (!process.version.startsWith('v6.')) {
 		logging.error('Unsupported node version - server.cache.modulePath may not work correctly');
 	}
 	fs.writeFileSync(serverCacheModulePathJs, fs.readFileSync(serverCacheModulePathTemplateJs, 'utf8'));
