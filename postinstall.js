@@ -473,6 +473,12 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	// ghost knex migrator config
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost'), 'MigratorConfig' + '\')', 'MigratorConfig');
 
+	// ghost built-in config
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'defaults\')', 'defaults');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'overrides\')', 'overrides');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.development\')', 'config.development');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.production\')', 'config.production');
+
 	// ghost default scheduler
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'adapters', 'scheduling'), 'SchedulingDefault' + '\'', 'SchedulingDefault');
 
@@ -481,14 +487,28 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	overrides.apps.internal.forEach(function (app) {
 		processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'apps', app), 'index\')', 'index');
 	});
+	
+	// ghost data
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'init'));
+	addFilesInSubDirectoriesToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'versions'));
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'schema', 'fixtures'));
 
 	// ghost models
 	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'models'));
+	
+	// ghost themes built-in config
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'themes', 'config'), 'defaults\')', 'defaults');
+	
+	// ghost translations
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'translations'), 'en\')', 'en');
 
 	// bookshelf
 	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'bookshelf', 'lib', 'bookshelf.js')]) {
 		processRequire(path.resolve(__dirname, 'node_modules', 'bookshelf', 'lib', 'plugins'), 'registry' + '\')', 'registry');
 	}
+
+	// gscan
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'gscan', 'lib', 'checks'));
 
 	// image-size
 	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types.js')]) {
@@ -515,8 +535,17 @@ function addFilesThatCannotBeDetectedToServerCache() {
 // adds all .js files in a directory to the server cache
 function addFilesInDirectoryToServerCache(dir) {
 	fs.readdirSync(dir).forEach(function(filename) {
-		if (/\.js$/.test(filename)) {
+		if ((/\.js$/.test(filename)) || (/\.json$/.test(filename))) {
 			processFileForServerCache(dir, filename);
+		}
+	});
+}
+
+// adds all .js files in sub-directories to the server cache
+function addFilesInSubDirectoriesToServerCache(dir) {
+	fs.readdirSync(dir).forEach(function(filename) {
+		if (fs.statSync(path.resolve(dir, filename)).isDirectory()) {
+			addFilesInDirectoryToServerCache(path.resolve(dir, filename));
 		}
 	});
 }
