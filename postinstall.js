@@ -532,7 +532,7 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	}
 }
 
-// adds all .js files in a directory to the server cache
+// adds files in a directory to the server cache
 function addFilesInDirectoryToServerCache(dir) {
 	fs.readdirSync(dir).forEach(function(filename) {
 		if ((/\.js$/.test(filename)) || (/\.json$/.test(filename))) {
@@ -541,7 +541,7 @@ function addFilesInDirectoryToServerCache(dir) {
 	});
 }
 
-// adds all .js files in sub-directories to the server cache
+// adds files in sub-directories to the server cache
 function addFilesInSubDirectoriesToServerCache(dir) {
 	fs.readdirSync(dir).forEach(function(filename) {
 		if (fs.statSync(path.resolve(dir, filename)).isDirectory()) {
