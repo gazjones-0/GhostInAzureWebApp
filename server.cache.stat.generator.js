@@ -7,23 +7,28 @@ if (fs.statCacheExists !== true) {
 	cacheItems.push('fs.statCache = [];');
 	cacheItems.push('var originalLstatSync = fs.lstatSync;');
 	cacheItems.push('fs.lstatSync = function(path) {');
-	cacheItems.push('	if (fs.statCache[path]) {');
-	cacheItems.push('		return fs.statCache[path];');
-	cacheItems.push('	}');
-	cacheItems.push('	return originalLstatSync(path);');
+	cacheItems.push(	'if (fs.statCache[path]) {');
+	cacheItems.push(		'return fs.statCache[path];');
+	cacheItems.push(	'}');
+	cacheItems.push(	'return originalLstatSync(path);');
 	cacheItems.push('}');
 	cacheItems.push('var originalStatSync = fs.statSync;');
 	cacheItems.push('fs.statSync = function(path) {');
-	cacheItems.push('	if (fs.statCache[path]) {');
-	cacheItems.push('		return fs.statCache[path];');
-	cacheItems.push('	}');
-	cacheItems.push('	return originalStatSync(path);');
+	cacheItems.push(	'if (fs.statCache[path]) {');
+	cacheItems.push(		'return fs.statCache[path];');
+	cacheItems.push(	'}');
+	cacheItems.push(	'return originalStatSync(path);');
 	cacheItems.push('}');
 	for(var item in fs.statCache) {
-		cacheItems.push('fs.statCache[\'' + convertStringToCode(item) + '\']=' + fs.statCache[item]);
+		// ignore the content data and logs
+		if ((!item.startsWith('content/data')
+			&& (!item.startsWith('content/logs')))
+		{
+			cacheItems.push('fs.statCache[\'' + convertStringToCode(item) + '\']=' + fs.statCache[item]);
+		}
 	}
 	cacheItems.push('fs.statCacheExists = true;');
-	var cache = cacheItems.join('\n');
+	var cache = cacheItems.join('');
 	require('fs').writeFileSync(path.resolve(__dirname, 'server.cache.stat.js'), cache);
 }
 
