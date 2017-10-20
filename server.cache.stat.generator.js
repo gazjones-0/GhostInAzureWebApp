@@ -7,23 +7,21 @@ if (fs.statCacheExists !== true) {
 	cacheItems.push('fs.statCache = [];');
 	cacheItems.push('var originalLstatSync = fs.lstatSync;');
 	cacheItems.push('fs.lstatSync = function(path) {');
-	cacheItems.push(	'if (fs.statCache[path]) {');
-	cacheItems.push(		'return fs.statCache[path];');
-	cacheItems.push(	'}');
-	cacheItems.push(	'return originalLstatSync(path);');
-	cacheItems.push('}');
+		cacheItems.push('if (fs.statCache[path]) {');
+			cacheItems.push('return fs.statCache[path];');
+		cacheItems.push('}');
+		cacheItems.push('return originalLstatSync(path);');
+	cacheItems.push('};');
 	cacheItems.push('var originalStatSync = fs.statSync;');
 	cacheItems.push('fs.statSync = function(path) {');
-	cacheItems.push(	'if (fs.statCache[path]) {');
-	cacheItems.push(		'return fs.statCache[path];');
-	cacheItems.push(	'}');
-	cacheItems.push(	'return originalStatSync(path);');
-	cacheItems.push('}');
+		cacheItems.push('if (fs.statCache[path]) {');
+			cacheItems.push('return fs.statCache[path];');
+		cacheItems.push('}');
+		cacheItems.push('return originalStatSync(path);');
+	cacheItems.push('};');
 	for(var item in fs.statCache) {
 		// ignore the content data and logs
-		if ((!item.startsWith('content/data')
-			&& (!item.startsWith('content/logs')))
-		{
+		if (!item.startsWith('content/data') && !item.startsWith('content/logs')) {
 			cacheItems.push('fs.statCache[\'' + convertStringToCode(item) + '\']=' + fs.statCache[item]);
 		}
 	}
