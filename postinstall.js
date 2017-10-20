@@ -21,6 +21,8 @@ var serverCacheJsPath = path.resolve(__dirname, 'server.cache.js');
 var serverCacheJsZippedPath = path.resolve(__dirname, 'server.cache.js.gz');
 var serverCacheModulePathJs = path.resolve(__dirname, 'server.cache.modulePath.js');
 var serverCacheModulePathTemplateJs = path.resolve(__dirname, 'server.cache.modulePath.template.js');
+var serverCacheStatJs = path.resolve(__dirname, 'server.cache.stat.js');
+var serverCacheStatTemplateJs = path.resolve(__dirname, 'server.cache.stat.template.js');
 var serverTemplateJsPath = path.resolve(__dirname, 'server.template.js');
 var ghostPath = path.resolve(__dirname, 'node_modules/ghost/index.js');
 var serverCacheVariableName = 's';	// use a single letter to minimize the file size
@@ -33,6 +35,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 	createServerJs();
 	createServerCacheJs();
 	createServerCacheModulePathJs();
+	createServerCacheStatJs();
 } else {
 	// not running in Azure, so we should be running locally, only do post-install if we're not in production; if we're in
 	// production, but running locally, assume the user is doing something specific and is handling things themselves
@@ -42,6 +45,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 		createServerJs();
 		createServerCacheJs();
 		createServerCacheModulePathJs();
+		createServerCacheStatJs();
 	} else {
 		logging.warn('Don\'t appear to be running in Azure, skipping post-install as environment is currently ' + config.get('env'));
 		logging.warn('When repo is deployed to Azure the database in Azure will be automatically migrated to the latest version so you don\'t need to; if you still wish to migrate the local database to the latest version use node dbmigrate.js');
@@ -94,10 +98,13 @@ function createServerJs() {
 	var ghost = fs.readFileSync(ghostPath, 'utf8');
 	ghost = strReplaceAll('require(\'.\\', 'require(\'ghost\\', ghost);
 	ghost = strReplaceAll('require(\'./', 'require(\'ghost/', ghost);
-	if (ghost.indexOf('ghost()') >= 0) {
-		ghost = ghost.substring(0, ghost.indexOf('ghost()')) + 'require(\'./server.cache.modulePath.generator\');\n' + ghost.substring(ghost.indexOf('ghost()'));
+	if (ghost.indexOf('logging.info(\'Ghost boot\'') >= 0) {
+		ghost = ghost.substring(0, ghost.indexOf('logging.info(\'Ghost boot\''))
+			+ 'require(\'./server.cache.modulePath.generator\');\n        '
+			+ 'require(\'./server.cache.stat.generator\');\n        '
+			+ ghost.substring(ghost.indexOf('logging.info(\'Ghost boot\''));
 	} else {
-		logging.error('Can\'t find ghost() in startup file, unable to create modulePath cache.');
+		logging.error('Can\'t find logging.info(\'Ghost boot\' in startup file, unable to create modulePath cache.');
 	}
 
 	// create file from the template
@@ -180,6 +187,15 @@ function createServerCacheModulePathJs() {
 	logging.info('Created server.cache.modulePath.js');
 }
 
+function createServerCacheStatJs() {
+	logging.info('Creating server.cache.stat.js');
+	if (!process.version.startsWith('v6.')) {
+		logging.error('Unsupported node version - server.cache.stat may not work correctly');
+	}
+	fs.writeFileSync(serverCacheStatJs, fs.readFileSync(serverCacheStatTemplateJs, 'utf8'));
+	logging.info('Created server.cache.stat.js');
+}
+
 // processes a file for the server cache
 function processFileForServerCache(dir, file) {
 	// ignore any attemps to process the cache we're generating or the server file
@@ -216,11 +232,10 @@ function processFileForServerCache(dir, file) {
 		arrayEntry = arrayEntry.substr(0, arrayEntry.length - 3);
 	}
 
-	// don't cache .json (some files will require these directly)
-
-	// don't add .json (some files will require these directly) or the server file
-	// itself to the cache, but we'll still walk any dependencies they have
-	if (!path.resolve(dir, file).endsWith('.json') && !(path.resolve(dir, file) === serverJsPath)) {
+	// don't add the server file itself, or any of the caches we'll generate to the cache, but we'll still walk any dependencies they have
+	if ((!(path.resolve(dir, file) === serverJsPath))
+		&& (!(path.resolve(dir, file) === serverCacheModulePathJs))
+		&& (!(path.resolve(dir, file) === serverCacheStatJs))) {
 		// add the compressed file (or the uncompressed one if we couldn't compress it)
 		if ((compressionSucceeded === true) && (!compressedContent.error)) {
 			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(compressedContent.code) + '\';');

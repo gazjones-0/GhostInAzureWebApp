@@ -4,7 +4,10 @@ var path = require('path');
 // load our module path cache
 require('./server.cache.modulePath');
 
-// load our cache
+// load our stat cache
+require('./server.cache.stat');
+
+// load our file cache
 eval(require('zlib').gunzipSync(fs.readFileSync(path.resolve(__dirname, 'server.cache.js.gz'))).toString());
 
 // save the original readFileSync that we'll override with our caching version

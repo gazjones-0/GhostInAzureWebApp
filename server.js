@@ -10,7 +10,10 @@ var path = require('path');
 // load our module path cache
 require('./server.cache.modulePath');
 
-// load our cache
+// load our stat cache
+require('./server.cache.stat');
+
+// load our file cache
 eval(require('zlib').gunzipSync(fs.readFileSync(path.resolve(__dirname, 'server.cache.js.gz'))).toString());
 
 // save the original readFileSync that we'll override with our caching version
@@ -65,7 +68,6 @@ utils = require('ghost/core/server/utils');
 parentApp = express();
 
 debug('Initialising Ghost');
-require('./server.cache.modulePath.generator');
 ghost().then(function (ghostServer) {
     // Mount our Ghost instance on our desired subdirectory path if it exists.
     parentApp.use(utils.url.getSubdir(), ghostServer.rootApp);
@@ -73,6 +75,8 @@ ghost().then(function (ghostServer) {
     debug('Starting Ghost');
     // Let Ghost handle starting our server instance.
     return ghostServer.start(parentApp).then(function afterStart() {
+        require('./server.cache.modulePath.generator');
+        require('./server.cache.stat.generator');
         logging.info('Ghost boot', (Date.now() - startTime) / 1000 + 's');
 
         // if IPC messaging is enabled, ensure ghost sends message to parent
