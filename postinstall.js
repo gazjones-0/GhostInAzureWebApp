@@ -100,9 +100,11 @@ function createServerJs() {
 	ghost = strReplaceAll('require(\'./', 'require(\'ghost/', ghost);
 	if (ghost.indexOf('logging.info(\'Ghost boot\'') >= 0) {
 		ghost = ghost.substring(0, ghost.indexOf('logging.info(\'Ghost boot\''))
-			+ 'require(\'./server.cache.modulePath.generator\');\n        '
-			+ 'require(\'./server.cache.stat.generator\');\n        '
-			+ ghost.substring(ghost.indexOf('logging.info(\'Ghost boot\''));
+			+ '// generate module path cache (if it already exists this will do nothing)\n'
+			+ '        require(\'./server.cache.modulePath.generator\');\n'
+			+ '        // generate the stat cache (if it already exists this will do nothing)\n'
+			+ '        require(\'./server.cache.stat.generator\');\n'
+			+ '        ' + ghost.substring(ghost.indexOf('logging.info(\'Ghost boot\''));
 	} else {
 		logging.error('Can\'t find logging.info(\'Ghost boot\' in startup file, unable to create modulePath cache.');
 	}
