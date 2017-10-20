@@ -7,7 +7,7 @@ if (module.modulePathCacheExists !== true) {
 	for(var item in module._pathCache) {
 		cacheItems.push('module._pathCache[\'' + convertStringToCode(item) + '\']=\'' + convertStringToCode(module._pathCache[item]) + '\';');
 	}
-	cacheItems.push('module.modulePathCacheExists = true;');
+	cacheItems.push('module.modulePathCacheExists=true;');
 	var cache = cacheItems.join('');
 	require('fs').writeFileSync(path.resolve(__dirname, 'server.cache.modulePath.js'), cache);
 }
