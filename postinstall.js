@@ -507,6 +507,10 @@ function addFilesThatCannotBeDetectedToServerCache() {
 		processRequire(path.resolve(__dirname, 'node_modules', 'bookshelf', 'lib', 'plugins'), 'registry' + '\')', 'registry');
 	}
 
+	// bookshelf-relations
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'bookshelf-relations'));
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'bookshelf-relations', 'lib'));
+
 	// gscan
 	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'gscan', 'lib', 'checks'));
 
