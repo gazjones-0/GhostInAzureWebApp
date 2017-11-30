@@ -15,6 +15,10 @@ knexMigrator = new KnexMigrator({
 });
 
 knexMigrator.migrate()
+	.then(function onMigrateSuccess() {
+		logging.info('Migration succeeded');
+		return null;
+	})
 	.catch(function onMigrateError(err) {
 		logging.error('Migration failed: ' + err.message);
 	});
