@@ -3,7 +3,7 @@ var path = require('path');
 
 if (module.modulePathCacheExists !== true) {
 	var cacheItems = [];
-	cacheItems.push ('var module=require(\'module\');');
+	cacheItems.push('var module=require(\'module\');');
 	for(var item in module._pathCache) {
 		cacheItems.push('module._pathCache[\'' + convertStringToCode(item) + '\']=\'' + convertStringToCode(module._pathCache[item]) + '\';');
 	}
