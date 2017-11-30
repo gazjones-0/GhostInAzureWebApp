@@ -14,11 +14,17 @@ knexMigrator = new KnexMigrator({
     knexMigratorFilePath: __dirname + '\\node_modules\\ghost'
 });
 
+logging.info('Resetting ' + config.get('env'));
 knexMigrator.reset()
 	.then(function onResetSuccess() {
+		logging.info('Reset succeeded');
 		knexMigrator.init()
+			.then(function onInitSuccess() {
+				logging.info('Initialisation succeeded');
+				return null;
+			})
 			.catch(function onInitError(err) {
-				logging.error('Init failed: ' + err.message);
+				logging.error('Initialisation failed: ' + err.message);
 			});
 		return null;
 	})
