@@ -4,20 +4,18 @@ Ghost ready for deployment to an Azure Windows web app -- there's a one-click de
 
 ## Before you deploy we have to talk about startup performance...
 
-When I first deployed Ghost, the site took a while to startup, which I put down to it being the initial deployment; however, this happens whenever the app gets recycled (which can happen any time, but on the free and shared tiers it's every 20mins). Some investigation led me to the root cause -- Ghost uses a significant number of node modules, and Azure takes a long time to load them.
+With standard deployment, Ghost takes a while to start, and this happens whenever app's recycled (which can be any time; on free / shared it's every 20mins); investigation found root cause - Ghost uses lots of modules and Azure's slow to load them. I had some success improving this with caching - some very quick tests showed:
 
-I tried do improve this with some caching (see later for more details on this), with some success -- I did some (very) quick tests of start time by restarting the web app, browsing to the site and then looking at what Ghost records the boot time as in the log:
+* Free - with caching ~3-6s (16-19s after deployment; without cache ~20-25s)
+* Shared - with caching ~3-6s (16-19s after deployment; without cache ~20-25s)
+* Basic - with caching ~3-6s (6-7s after deployment; without cache ~30s)
+* Standard - with caching ~3-6s (6-7s after deployment; without cache ~30s)
 
-* Free - with caching around 3-6s (16-19s after a deployment; without cache around 20-25s)
-* Shared - with caching around 3-6s (16-19s after a deployment; without cache around 20-25s)
-* Basic - with caching around 3-6s (6-7s after a deployment; without cache around 30s)
-* Standard - with caching around 3-6s (6-7s after a deployment; without cache around 30s)
-
-The startup times for basic+ without caching were a bit surprising -- my guess is free and shared benefit from underlying infrastructure being in continual use whilst in basic and higher you have an additional hit of fresh resources being spun up; of course, basic+ bring other benefits not least that you can enable "always on".
+Times for basic+ without cache were bit surprising -- my guess is free / shared benefit from underlying infrastructure being in continual use whilst basic+ has hit of spinning up resources (basic+ has other benefits like "always on" though).
 
 ## Potential workaround for slow startup times
 
-Use Azure CDN to host a custom domain that essentially acts as a cache sat in front of your web app, so app recycles or slow responses shouldn't really matter -- note that I haven't tried this but saw it on <https://github.com/chadly/ghost> which I only found after I'd got Ghost up and running in Azure.
+Use Azure CDN to host a custom domain acting as cache in front of your web app -- I haven't tried this but saw it on <https://github.com/chadly/ghost> which I found after I'd got Ghost running in Azure.
 
 ## Deployment
 
@@ -25,63 +23,55 @@ Use Azure CDN to host a custom domain that essentially acts as a cache sat in fr
 
 ### If deployment fails...
 
-When deploying to a basic or lower plan, the deployment might fail (it sometimes does, it sometimes doesn't) - go to the Azure portal and check the 'Deployment Options' part of the site, if this shows the deployment was successful then you're good to go; if not, you can either keep re-deploying it until it succeeds or deploy to a standard app service and then downgrade the plan. (Even when deployment fails, the site usually appears to work anyway but you're probably better off ensuring you've got a successful deployment).
+If it's basic or lower and it fails (it sometimes does, sometimes doesn't), go to Azure portal and check 'Deployment Options'; if this shows it was successful you're good to go; if not, either keep re-deploying until it succeeds or deploy to a standard app service and then downgrade.
 
-The issue appears to be the amount of time it takes to install all the node modules and run the postinstall script (which gets automatically run during deployment), and I think sometimes the underlying infrastructure gets recycled in the middle of the deployment.
+Installing the modules and running post-install takes a while, and underlying infrastructure sometimes gets recycled during it causing it to fail.
 
 ## Things I tried to improve startup performance
 
-The underlying issue seems to be the file system used for web apps is just slow, so I first tried building a cache of every .js file in the node_modules directory, load this on startup and swap out node's file reader to read from the cache rather than hit the file system -- the thought behind this being that whilst this won't reduce the amount of data being loaded, it will remove pretty much all the file accesses.
+Underlying issue seems to be file system is slow, so I first tried building a cache of every .js file in node_modules, loading on startup and swapping node's file system to use the cache -- idea being it doesn't reduce amount of data but it removes the file accesses. This improved things, but cache was 80M so I played with webpack to try and reduce it, but webpack wasn't really designed for this and it looked like I'd need to mess with its internals and I don't have enough node / webpack experience or spare time for this. So I knocked out a crude dependency walker that built cache of modules Ghost loads at startup; this gave an ~14M cache; adding minification got to ~8M; gzipping it all got down to ~2M.
 
-This improved it a bit, but I did end up with an 80M cache, so I played with webpack to see if I could use it instead; unfortunately, it wasn't really designed with this scenario in mind and, whilst it had the core of what I needed, it got to the point that it looked like I'd need to start messing around with bits of webpack's internals to make it work and, honestly, I don't have enough node / webpack experience, or the spare time to go down that route (until I tried deploying Ghost I'd never even used node).
+Things were still slow, so looking at node's module loader found it does lots of directory traversing and processing (via `stat`); it builds a cache but this doesn't help with cold starts, so on first run of app I let everything load in and then save the cache node built; on subsequent app starts it loads the cache in so it doesn't have to build it every cold start. Using a crude tracer I found there were still lots of `stat` calls in general during startup so I added an additional cache for these, both successful calls and ones which throw exceptions.
 
-So instead I knocked out a crude dependency walker that worked out the modules Ghost loads at startup and just cached those (about a 14M cache as I recall); then I minified everything when building the cache (about a 7M cache) and then finally I tried gzipping it as well (about 1.4M zipped).
+This is all pretty dirty and hacky (and tied to node version in use), but it noticeably improves startup.
 
-Even with this though it was still slow, so I looked further node's module loader internals and found that it can do a lot of directory traversing and processing (via `stat`) to work out the actual file to load; it builds a cache as it does this, but that won't help on a cold start, and, as it involved the disk, was likely another source of slowness in Azure, so on the first run of the app, it lets everything load in, and then saves the cache to disk; on subsequent app loads it loads the cache in first which means node shouldn't need to do any disk searching.
+I'd prefer faster startup but I can live with this. There are reports of Azure functions suffering similar issue that they solved like this (see <https://github.com/Azure/azure-functions-pack>).
 
-There was still a fair amount of `stat` calls so I then added an additional cache for these, which improved things further.
-
-I freely admit that this is pretty dirty and hacky (not to mention tied to the node version in use), but it has a noticeable effect on subsequent app loads, so I've kept this in.
-
-Whilst this isn't ideal, I can live with the 3-6s startup time on deployment / Ghost version upgrade (I've access to a standard service plan I can run it in); I've a couple of other ideas that might improve things further but suspect any further improvements will be marginal. Also, after I'd done this, I found some reports of Azure function suffering from a similar issue that they solved in a similar way (see <https://github.com/Azure/azure-functions-pack>) which leads me to suspect a similar root cause for web apps.
-
-I've folded this into the master branch but you can find the original experiment on the [cacheFilesInMemory](https://github.com/gazooka/GhostInAzureWebApp/tree/cacheFilesInMemory), [preloadModulePathCache](https://github.com/gazooka/GhostInAzureWebApp/tree/preloadModulePathCache) and [preloadStatCache](https://github.com/gazooka/GhostInAzureWebApp/tree/preloadStatCache) branches if you're interested.
-
-Azure now supports Linux app service plans so it'd be an interesting experiment to run Ghost in one of these and see if it has the same issue.
+I folded all these into master but you can find original experiments on the other brances. Azure supports Linux app services so it'd be interesting to run Ghost in one to see if it has same issue.
 
 ## Notes on the caching
 
-There are three caches in use, with the goal being to avoid disk accesses wherever possible:
+Three caches, goal is avoid disk accesses:
 
-* Cache of the files Ghost loads during startup; there are loaded in one go and then it's just memory accesses rather than having to read from disk
-* Cache of the module paths; whenever a module is `require`d node examines various paths to determine where the file really resides on disk, and then caches this in memory so that subsequent `require`s don't need to re-examine all the paths; rather than have it built every time the app starts we let it build once, store it on disk and then load it on subsequent runs which avoids having to do any path re-examinations
-* Cache of stat results; various `stat` calls are made during startup to determine file information; rather than do these every time the app starts we record them during the first start, then load this cache back in on subsequent runs which avoids having to access the disk
+* Cache of files Ghost loads during startup; loaded in one go
+* Cache of module paths; whenever module is `require`d node looks at paths to work out where it really is and caches it; once app has started first time and cache built we store it on disk and load it on subsequent runs so don't have to build it
+* Cache of stat results; various `stat` calls made during startup; like module paths we let record results first time app is run then store them on disk and load it on subsequent runs so don't need to check the disk
 
-The only real caveat with the caching is that it's assumed that if anything within node_modules gets changed, you'll re-deploy (or re-run the post-install process), which I think will be good enough in practice.
+Caveat with above is it's assumed if anything in node_modules changes you re-deploy (or re-run post-install); this should be ok.
 
 ### The postinstall.js script
 
-This is run automatically as part of deployment, and does the following:
+Runs automatically as part of deployment:
 
-* Updates the website url in `config.production.json` to match where it's deployed; the config in the repository is set to `ghostinazurewebapp.azurewebsites.net` so the script will change this to match whatever you named it during deployment
-* Ensures the database has been migrated to the latest version (might be required if Ghost has been upgraded)
+* Updates website url in `config.production.json` to match where it's deployed; config in repository is set to `ghostinazurewebapp.azurewebsites.net` so script changes this to match where deployed
+* Ensures database has been migrated to latest version (might be required if Ghost has been upgraded)
 * Creates `server.js` from `server.template.js`
 * Creates the file cache
 
-The `server.js` file is what's run by iisnode and is built from `server.template.js`; it does a couple of things:
+`server.js` file is what's run by iisnode and is built from `server.template.js`:
 
-* Loads the caches
-* Configures the port the app uses to work in Azure
+* Loads caches
+* Configures port app uses to work in Azure
 * Starts Ghost
-* On first run of the app, the module path and stat caches are also built (and then used on subsequent startups)
+* On first run of app, module path and stat caches are built (and used on subsequent startups)
 
-When `server.js` is created, the contents of the Ghost startup script are copied in so Ghost starts up identically to how it would if normally deployed.
+When `server.js` is created, contents of Ghost startup script are copied in so Ghost starts up identically to how it would if normally deployed.
 
 ### Other scripts
 
 #### dbinit.js
 
-Completely re-initialises the database if you want to reset everything back to as it would be after a fresh install; you can run this against the production database in Azure with the following command from the console (note the `set` command before the `node` command; by default `node_env` isn't set in the console):
+Completely re-initialises database if you want to reset everything back to as it would be after a fresh install; you can run this against the production database in Azure with the following command from the console (note the `set` command before the `node` command; by default `node_env` isn't set in the console):
 
 ```set node_env=production&node dbinit.js```
 
