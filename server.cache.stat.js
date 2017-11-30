@@ -9,12 +9,12 @@ fs.lstatSync = function(path) {
 	try {
 		var stats = fslstatSync(path);
 		if (!fs.statCache[path]) {
-			fs.statCache[path] = 'new fs.Stats(' + stats.dev + ', ' + stats.mode + ', ' + stats.nlink + ', ' + stats.uid + ', ' + stats.gid + ', ' + stats.rdev + ', ' + stats.blksize + ', ' + stats.ino + ', ' + stats.size + ', ' + stats.blocks + ', ' + stats.atime.getTime() + ', ' + stats.mtime.getTime() + ', ' + stats.ctime.getTime() + ', ' + stats.birthtime.getTime() + ');';
+			fs.statCache[path] = 'new fs.Stats(' + stats.dev + ',' + stats.mode + ',' + stats.nlink + ',' + stats.uid + ',' + stats.gid + ',' + stats.rdev + ',' + stats.blksize + ',' + stats.ino + ',' + stats.size + ',' + stats.blocks + ',' + stats.atime.getTime() + ',' + stats.mtime.getTime() + ',' + stats.ctime.getTime() + ',' + stats.birthtime.getTime() + ')';
 		}
 		return stats;
 	} catch(ex) {
 		if (!fs.statExceptionCache[path]) {
-			fs.statExceptionCache[path] = '{ Error: new Error(\'' + convertStringToCode(ex.message) + '\'), errno: ' + ex.errno + ', code: \'' + convertStringToCode(ex.code) + '\', syscall: \'' + convertStringToCode(ex.syscall) + '\', path: \'' + convertStringToCode(ex.path) + '\' }';
+			fs.statExceptionCache[path] = '{Error:new Error(\'' + convertStringToCode(ex.message) + '\'),errno:' + ex.errno + ',code:\'' + convertStringToCode(ex.code) + '\',syscall:\'' + convertStringToCode(ex.syscall) + '\',path:\'' + convertStringToCode(ex.path) + '\'}';
 		}
 		throw ex;
 	}
@@ -26,12 +26,12 @@ fs.statSync = function(path) {
 	try {
 		var stats = fsstatSync(path);
 		if (!fs.statCache[path]) {
-			fs.statCache[path] = 'new fs.Stats(' + stats.dev + ', ' + stats.mode + ', ' + stats.nlink + ', ' + stats.uid + ', ' + stats.gid + ', ' + stats.rdev + ', ' + stats.blksize + ', ' + stats.ino + ', ' + stats.size + ', ' + stats.blocks + ', ' + stats.atime.getTime() + ', ' + stats.mtime.getTime() + ', ' + stats.ctime.getTime() + ', ' + stats.birthtime.getTime() + ');';
+			fs.statCache[path] = 'new fs.Stats(' + stats.dev + ',' + stats.mode + ',' + stats.nlink + ',' + stats.uid + ',' + stats.gid + ',' + stats.rdev + ',' + stats.blksize + ',' + stats.ino + ',' + stats.size + ',' + stats.blocks + ',' + stats.atime.getTime() + ',' + stats.mtime.getTime() + ',' + stats.ctime.getTime() + ',' + stats.birthtime.getTime() + ')';
 		}
 		return stats;
 	} catch(ex) {
 		if (!fs.statExceptionCache[path]) {
-			fs.statExceptionCache[path] = '{ Error: new Error(\'' + convertStringToCode(ex.message) + '\'), errno: ' + ex.errno + ', code: \'' + convertStringToCode(ex.code) + '\', syscall: \'' + convertStringToCode(ex.syscall) + '\', path: \'' + convertStringToCode(ex.path) + '\' }';
+			fs.statExceptionCache[path] = '{Error:new Error(\'' + convertStringToCode(ex.message) + '\'),errno:' + ex.errno + ',code:\'' + convertStringToCode(ex.code) + '\',syscall:\'' + convertStringToCode(ex.syscall) + '\',path:\'' + convertStringToCode(ex.path) + '\'}';
 		}
 		throw ex;
 	}
