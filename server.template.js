@@ -39,3 +39,15 @@ if (process.env.PORT) {
 	// we do the require in-place here to ensure it comes from the cache
 	require('ghost/core/server/config').set('server:port', process.env.PORT);
 }
+
+// on Windows, Ctrl-C (SIGINT) won't be recognised unless we go via readline
+if (process.platform === 'win32') {
+	var rl = require('readline').createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+	rl.on('SIGINT', function () {
+		process.emit('SIGINT');
+	});
+}
