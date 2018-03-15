@@ -1,7 +1,7 @@
 {
 	"dependencies": {
 		"deasync": "^0.1.11",
-		"ghost": "1.18.4",
+		"ghost": "^1.21.5",
 		"knex": "0.12.9",
 		"knex-migrator": "3.1.2",
 		"replace-in-file": "^3.0.0",

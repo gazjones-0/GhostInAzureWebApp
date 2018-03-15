@@ -98,15 +98,15 @@ function createServerJs() {
 	var ghost = fs.readFileSync(ghostPath, 'utf8');
 	ghost = strReplaceAll('require(\'.\\', 'require(\'ghost\\', ghost);
 	ghost = strReplaceAll('require(\'./', 'require(\'ghost/', ghost);
-	if (ghost.indexOf('logging.info(\'Ghost boot\'') >= 0) {
-		ghost = ghost.substring(0, ghost.indexOf('logging.info(\'Ghost boot\''))
+	if (ghost.indexOf('common.logging.info(\'Ghost boot\'') >= 0) {
+		ghost = ghost.substring(0, ghost.indexOf('common.logging.info(\'Ghost boot\''))
 			+ '// generate module path cache (if it already exists this will do nothing)\n'
 			+ '        require(\'./server.cache.modulePath.generator\');\n'
 			+ '        // generate the stat cache (if it already exists this will do nothing)\n'
 			+ '        require(\'./server.cache.stat.generator\');\n'
-			+ '        ' + ghost.substring(ghost.indexOf('logging.info(\'Ghost boot\''));
+			+ '        ' + ghost.substring(ghost.indexOf('common.logging.info(\'Ghost boot\''));
 	} else {
-		logging.error('Can\'t find logging.info(\'Ghost boot\' in startup file, unable to create modulePath cache.');
+		logging.error('Can\'t find common.logging.info(\'Ghost boot\' in startup file, unable to create modulePath cache.');
 	}
 
 	// create file from the template
@@ -517,9 +517,9 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	// image-size
 	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types.js')]) {
 		var types = require(path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types.js'));
-		types.forEach(function (type) {
+		for(var type in types) {
 			processRequire(path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types'), type + '\')', type);
-		});
+		};
 	}
 
 	// nconf
