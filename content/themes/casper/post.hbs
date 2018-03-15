@@ -20,9 +20,9 @@ into the {body} of the default.hbs template --}}
             <header class="post-full-header">
                 <section class="post-full-meta">
                     <time class="post-full-meta-date" datetime="{{date format="YYYY-MM-DD"}}">{{date format="D MMMM YYYY"}}</time>
-                    {{#if tags}}
-                        <span class="date-divider">/</span> <a href="{{@blog.url}}/tag/{{tags.[0].slug}}">{{tags.[0].name}}</a>
-                    {{/if}}
+                    {{#primary_tag}}
+                        <span class="date-divider">/</span> <a href="{{url}}">{{name}}</a>
+                    {{/primary_tag}}
                 </section>
                 <h1 class="post-full-title">{{title}}</h1>
             </header>
@@ -80,7 +80,7 @@ into the {body} of the default.hbs template --}}
                 <script>
                     var disqus_config = function () {
                         this.page.url = '{{url absolute="true"}}';
-                        this.page.identifier = 'ghost-{{id}}';
+                        this.page.identifier = 'ghost-{{comment_id}}';
                     };
                     (function() {
                         var d = document, s = d.createElement('script');
@@ -101,11 +101,12 @@ into the {body} of the default.hbs template --}}
 <aside class="read-next outer">
     <div class="inner">
         <div class="read-next-feed">
-
-            {{#get "posts" filter="tags:{{tags.[0].slug}}+id:-{{id}}" limit="3"}}
+            {{#if primary_tag}}
+            {{#get "posts" filter="tags:{{primary_tag.slug}}+id:-{{id}}" limit="3" as |related_posts|}}
+                {{#if related_posts}}
                 <article class="read-next-card"
-                    {{#if ../tags.[0].feature_image}}
-                        style="background-image: url({{../tags.[0].feature_image}})"
+                    {{#if ../primary_tag.feature_image}}
+                        style="background-image: url({{../primary_tag.feature_image}})"
                     {{else}}
                         {{#if @blog.cover_image}}
                             style="background-image: url({{@blog.cover_image}})"{{/if}}
@@ -113,21 +114,25 @@ into the {body} of the default.hbs template --}}
                 >
                     <header class="read-next-card-header">
                         <small class="read-next-card-header-sitetitle">&mdash; {{@blog.title}} &mdash;</small>
-                        <h3 class="read-next-card-header-title"><a href="{{@blog.url}}/tag/{{../tags.[0].slug}}/">{{../tags.[0].name}}</a></h3>
+                        {{#../primary_tag}}
+                        <h3 class="read-next-card-header-title"><a href="{{url}}">{{name}}</a></h3>
+                        {{/../primary_tag}}
                     </header>
                     <div class="read-next-divider">{{> "icons/infinity"}}</div>
                     <div class="read-next-card-content">
                         <ul>
-                            {{#foreach posts}}
+                            {{#foreach related_posts}}
                             <li><a href="{{url}}">{{title}}</a></li>
                             {{/foreach}}
                         </ul>
                     </div>
                     <footer class="read-next-card-footer">
-                        <a href="{{@blog.url}}/tag/{{../tags.[0].slug}}/">{{plural meta.pagination.total empty='No posts' singular='% post' plural='See all % posts'}} →</a>
+                        <a href="{{#../primary_tag}}{{url}}{{/../primary_tag}}">{{plural meta.pagination.total empty='No posts' singular='% post' plural='See all % posts'}} →</a>
                     </footer>
                 </article>
+                {{/if}}
             {{/get}}
+            {{/if}}
 
             {{!-- If there's a next post, display it using the same markup included from - partials/post-card.hbs --}}
             {{#next_post}}
