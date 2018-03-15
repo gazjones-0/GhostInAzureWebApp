@@ -51,6 +51,17 @@ body {
 /* 2. Layout - Page building blocks
 /* ---------------------------------------------------------- */
 
+.site-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.site-main {
+    z-index: 100;
+    flex-grow: 1;
+}
+
 /* Full width page blocks */
 .outer {
     position: relative;
@@ -81,12 +92,12 @@ body {
     .home-template .post-feed,
     .tag-template .post-feed,
     .author-template .post-feed {
-        margin-top: -110px;
+        margin-top: -70px;
+        padding-top: 0;
     }
     .home-template .site-nav {
         position: relative;
         top: -70px;
-        z-index: 300;
     }
 }
 
@@ -134,8 +145,6 @@ body {
 }
 
 .site-header-content {
-    position: relative;
-    z-index: 100;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -147,6 +156,7 @@ body {
 }
 
 .site-title {
+    z-index: 10;
     margin: 0;
     padding: 0;
     font-size: 3.8rem;
@@ -158,6 +168,7 @@ body {
 }
 
 .site-description {
+    z-index: 10;
     margin: 0;
     padding: 5px 0;
     font-size: 2.2rem;
@@ -181,7 +192,7 @@ body {
 
 .site-nav {
     position: relative;
-    z-index: 100;
+    z-index: 300;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -195,12 +206,12 @@ body {
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     margin-right: 10px;
     padding-bottom: 80px;
     letter-spacing: 0.4px;
     white-space: nowrap;
 
-    -webkit-overflow-scrolling: touch;
     -ms-overflow-scrolling: touch;
 }
 
@@ -216,6 +227,7 @@ The knock-on effect of this is ugly browser-scroll bars at the bottom, so 80px o
     flex-shrink: 0;
     display: block;
     margin-right: 24px;
+    padding: 11px 0;
     color: #fff;
     font-size: 1.7rem;
     line-height: 1em;
@@ -344,12 +356,12 @@ The knock-on effect of this is ugly browser-scroll bars at the bottom, so 80px o
 
 @media (max-width: 700px) {
     .site-header {
-        padding-left: 0;
         padding-right: 0;
+        padding-left: 0;
     }
     .site-nav-left {
-        padding-left: 4vw;
         margin-right: 0;
+        padding-left: 4vw;
     }
     .site-nav-right {
         display: none;
@@ -362,7 +374,6 @@ The knock-on effect of this is ugly browser-scroll bars at the bottom, so 80px o
 
 .post-feed {
     position: relative;
-    z-index: 200;
     display: flex;
     flex-wrap: wrap;
     margin: 0 -20px;
@@ -391,6 +402,9 @@ The knock-on effect of this is ugly browser-scroll bars at the bottom, so 80px o
 
 .post-card-image-link {
     position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 5px 5px 0 0;
 }
 
 .post-card-image {
@@ -446,6 +460,8 @@ The knock-on effect of this is ugly browser-scroll bars at the bottom, so 80px o
     width: 25px;
     height: 25px;
     border-radius: 100%;
+
+    object-fit: cover;
 }
 
 .post-card-author {
@@ -470,6 +486,7 @@ The first (most recent) post in the list is styled to be bigger than the others 
     .home-template .post-feed .post-card:nth-child(6n+1):not(.no-image) .post-card-image-link {
         position: relative;
         flex: 1 1 auto;
+        border-radius: 5px 0 0 5px;
     }
 
     .home-template .post-feed .post-card:nth-child(6n+1):not(.no-image) .post-card-image {
@@ -537,6 +554,11 @@ The first (most recent) post in the list is styled to be bigger than the others 
     padding: 6vw 3vw 3vw;
     max-width: 1040px;
     text-align: center;
+}
+@media (max-width: 500px) {
+    .post-full-header {
+        padding: 14vw 3vw 10vw;
+    }
 }
 
 .post-full-meta {
@@ -651,20 +673,29 @@ The first (most recent) post in the list is styled to be bigger than the others 
     max-width: 920px;
 }
 
-.post-full-content p,
-.post-full-content ul,
-.post-full-content ol,
-.post-full-content dl,
-.post-full-content pre,
 .post-full-content h1,
 .post-full-content h2,
 .post-full-content h3,
 .post-full-content h4,
 .post-full-content h5,
 .post-full-content h6,
+.post-full-content p,
+.post-full-content ul,
+.post-full-content ol,
+.post-full-content dl,
+.post-full-content pre,
+.post-full-content blockquote,
 .post-full-comments,
 .footnotes {
     min-width: 100%;
+}
+
+.post-full-content li {
+    word-break: break-word;
+}
+
+.post-full-content li p {
+    margin: 0;
 }
 
 .post-template .kg-card-markdown > p:first-child {
@@ -696,53 +727,69 @@ The first (most recent) post in the list is styled to be bigger than the others 
     margin-top: 0;
 }
 
-.post-full-content img {
+.post-full-content img,
+.post-full-content video {
     display: block;
     margin: 1.5em auto;
     max-width: 1040px;
 }
 @media (max-width: 1040px) {
-    .post-full-content img {
+    .post-full-content img,
+    .post-full-content video {
         width: 100%;
     }
 }
 
-/*
-If an image url has #full on the end, give it special wide styles.
+
+/* Full bleed images (#full)
 Super neat trick courtesy of @JoelDrapper
+
+Usage (In Ghost edtior):
+
+![img](/some/image.jpg#full)
+
 */
 .post-full-content img[src$="#full"] {
-    width: 100vw;
     max-width: none;
+    width: 100vw;
+}
+
+
+/* Image captions
+
+Usage (In Ghost editor):
+
+![img](/some/image.jpg)
+<small>Your image caption</small>
+
+*/
+.post-full-content img + br + small {
+    display: block;
+    margin-top: -3em;
+    margin-bottom: 1.5em;
+}
+
+
+.post-full-content iframe {
+    margin: 0 auto;
 }
 
 .post-full-content blockquote {
-    margin: 0 0 1.5em 0;
-    padding: 1.5em 0;
-    border: 0;
-    color: var(--blue);
-    font-size: 3rem;
-    line-height: 1.6em;
-    text-align: center;
-}
-
-.post-full-content blockquote:before {
-    content: open-quote;
+    margin: 0 0 1.5em;
+    padding: 0 1.5em;
+    border-left: #3eb0ef 3px solid;
 }
 
 .post-full-content blockquote p {
-    margin: 0;
+    margin: 0 0 1em 0;
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    font-style: italic;
 }
 
-@media (min-width: 1000px) {
-    .post-full-content blockquote {
-        max-width: 1060px;
-        width: 100vw;
-    }
-}
-
-.post-full-content blockquote + blockquote {
-    padding-top: 0;
+.post-full-content blockquote p:last-child {
+    margin-bottom: 0;
 }
 
 .post-full-content code {
@@ -772,6 +819,10 @@ Super neat trick courtesy of @JoelDrapper
     font-size: inherit;
     line-height: inherit;
     background: transparent;
+}
+
+.post-full-content pre code * {
+    color: inherit;
 }
 
 .post-full-content .fluid-width-video-wrapper {
@@ -807,27 +858,82 @@ Super neat trick courtesy of @JoelDrapper
 }
 
 .post-full-content h1 {
-    font-size: 5rem;
+    margin: 0.5em 0 0.2em 0;
+    font-size: 4.6rem;
+    font-weight: 700;
+}
+@media (max-width: 500px) {
+    .post-full-content h1 {
+        font-size: 2.8rem;
+    }
 }
 
 .post-full-content h2 {
-    font-size: 3.5rem;
+    margin: 0.5em 0 0.2em 0;
+    font-size: 3.6rem;
+    font-weight: 700;
+}
+@media (max-width: 500px) {
+    .post-full-content h2 {
+        font-size: 2.6rem;
+    }
 }
 
 .post-full-content h3 {
-    font-size: 2.5rem;
+    margin: 0.5em 0 0.2em 0;
+    font-size: 2.8rem;
+    font-weight: 700;
+}
+@media (max-width: 500px) {
+    .post-full-content h3 {
+        font-size: 2.2rem;
+    }
 }
 
 .post-full-content h4 {
-    font-size: 1.6rem;
+    margin: 0.5em 0 0.2em 0;
+    font-size: 2.8rem;
+    font-weight: 700;
+}
+@media (max-width: 500px) {
+    .post-full-content h4 {
+        font-size: 2.2rem;
+    }
 }
 
 .post-full-content h5 {
-    font-size: 1.4rem;
+    display: block;
+    margin: 0.5em 0;
+    padding: 1em 0 1.5em;
+    border: 0;
+    color: var(--blue);
+    font-family: Georgia,serif;
+    font-size: 3.2rem;
+    line-height: 1.35em;
+    text-align: center;
+}
+@media (min-width: 1180px) {
+    .post-full-content h5 {
+        max-width: 1060px;
+        width: 100vw;
+    }
+}
+@media (max-width: 500px) {
+    .post-full-content h5 {
+        padding: 0 0 0.5em;
+        font-size: 2.2rem;
+    }
 }
 
 .post-full-content h6 {
-    font-size: 1.4rem;
+    margin: 0.5em 0 0.2em 0;
+    font-size: 2.3rem;
+    font-weight: 700;
+}
+@media (max-width: 500px) {
+    .post-full-content h6 {
+        font-size: 2rem;
+    }
 }
 
 .footnotes-sep {
@@ -860,8 +966,8 @@ Super neat trick courtesy of @JoelDrapper
         font-size: 2.9rem;
     }
     .post-full-image {
-        height: 350px;
         margin-bottom: 4vw;
+        height: 350px;
     }
     .post-full-content {
         padding: 0;
@@ -870,60 +976,52 @@ Super neat trick courtesy of @JoelDrapper
     .post-full-content:after {
         display: none;
     }
-    .post-full-content h1 {
-        font-size: 2.9rem;
-    }
-    .post-full-content h2 {
-        font-size: 2.9rem;
-    }
-    .post-full-content h3 {
-        font-size: 2rem;
-    }
 }
 
 /* Tables */
 .post-full-content table {
-    display: table;
-    width: 100%;
-    max-width: 100%;
+    display: inline-block;
     overflow-x: auto;
-    white-space: nowrap;
-    border-collapse: collapse;
-    border-spacing: 0;
     margin: 0.5em 0 2.5em;
+    max-width: 100%;
+    width: auto;
+    border-spacing: 0;
+    border-collapse: collapse;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     font-size: 1.6rem;
+    white-space: nowrap;
+    vertical-align: top;
 }
 
 .post-full-content table {
     -webkit-overflow-scrolling: touch;
     background: radial-gradient(ellipse at left, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 75%) 0 center, radial-gradient(ellipse at right, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 75%) 100% center;
-    background-size: 10px 100%, 10px 100%;
     background-attachment: scroll, scroll;
+    background-size: 10px 100%, 10px 100%;
     background-repeat: no-repeat;
 }
 
 .post-full-content table td:first-child {
     background-image: linear-gradient(to right, rgba(255,255,255, 1) 50%, rgba(255,255,255, 0) 100%);
-    background-repeat: no-repeat;
     background-size: 20px 100%;
+    background-repeat: no-repeat;
 }
 
 .post-full-content table td:last-child {
     background-image: linear-gradient(to left, rgba(255,255,255, 1) 50%, rgba(255,255,255, 0) 100%);
-    background-repeat: no-repeat;
     background-position: 100% 0;
     background-size: 20px 100%;
+    background-repeat: no-repeat;
 }
 
 .post-full-content table th {
-    font-size: 1.2rem;
-    letter-spacing: 0.2px;
     color: var(--darkgrey);
+    font-size: 1.2rem;
     font-weight: 700;
+    letter-spacing: 0.2px;
     text-align: left;
     text-transform: uppercase;
-    background: color(var(--whitegrey) l(+4%));
+    background-color: color(var(--whitegrey) l(+4%));
 }
 
 .post-full-content table th,
@@ -931,16 +1029,6 @@ Super neat trick courtesy of @JoelDrapper
     padding: 6px 12px;
     border: color(var(--whitegrey) l(-1%) s(-5%)) 1px solid;
 }
-
-@media (max-width: 800px) {
-    .post-full-content table {
-        display: inline-block;
-        vertical-align: top;
-        max-width: 100%;
-        width: auto;
-    }
-}
-
 
 
 /* 7.1. Subscribe Form
@@ -1051,8 +1139,8 @@ Super neat trick courtesy of @JoelDrapper
         width: 100%;
     }
     .subscribe-form button {
-        width: 100%;
         margin: 10px 0 0 0;
+        width: 100%;
     }
 }
 
@@ -1316,6 +1404,7 @@ Super neat trick courtesy of @JoelDrapper
     display: flex;
     align-items: center;
     color: var(--darkgrey);
+    line-height: 1.1em;
     font-weight: 700;
 }
 
@@ -1425,6 +1514,10 @@ Super neat trick courtesy of @JoelDrapper
     background-color: var(--blue);
 }
 
+.progress::-moz-progress-bar {
+    background-color: var(--blue);
+}
+
 .progress-container {
     position: absolute;
     top: 0;
@@ -1482,6 +1575,7 @@ Super neat trick courtesy of @JoelDrapper
 /* ---------------------------------------------------------- */
 
 .site-header-content .author-profile-image {
+    z-index: 10;
     flex-shrink: 0;
     margin: 0 0 20px 0;
     width: 100px;
@@ -1490,6 +1584,7 @@ Super neat trick courtesy of @JoelDrapper
 }
 
 .site-header-content .author-bio {
+    z-index: 10;
     flex-shrink: 0;
     margin: 5px 0 10px 0;
     max-width: 600px;
@@ -1501,6 +1596,7 @@ Super neat trick courtesy of @JoelDrapper
 }
 
 .site-header-content .author-meta {
+    z-index: 10;
     flex-shrink: 0;
     display: flex;
     justify-content: center;
@@ -1768,15 +1864,15 @@ Super neat trick courtesy of @JoelDrapper
 
 .site-footer-content {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
     color: rgba(255,255,255,0.7);
     font-size: 1.3rem;
 }
 
 .site-footer-content a {
-    color: rgba(255,255,255,0.7);;
+    color: rgba(255,255,255,0.7);
 }
 
 .site-footer-content a:hover {
