@@ -101,10 +101,10 @@ function createServerJs() {
 	if (ghost.indexOf('common.logging.info(\'Ghost boot\'') >= 0) {
 		ghost = ghost.substring(0, ghost.indexOf('common.logging.info(\'Ghost boot\''))
 			+ '// generate module path cache (if it already exists this will do nothing)\n'
-			+ '        require(\'./server.cache.modulePath.generator\');\n'
-			+ '        // generate the stat cache (if it already exists this will do nothing)\n'
-			+ '        require(\'./server.cache.stat.generator\');\n'
-			+ '        ' + ghost.substring(ghost.indexOf('common.logging.info(\'Ghost boot\''));
+			+ '            require(\'./server.cache.modulePath.generator\');\n'
+			+ '            // generate the stat cache (if it already exists this will do nothing)\n'
+			+ '            require(\'./server.cache.stat.generator\');\n'
+			+ '            ' + ghost.substring(ghost.indexOf('common.logging.info(\'Ghost boot\''));
 	} else {
 		logging.error('Can\'t find common.logging.info(\'Ghost boot\' in startup file, unable to create modulePath cache.');
 	}
@@ -182,7 +182,9 @@ function createZippedServerCacheJs() {
 
 function createServerCacheModulePathJs() {
 	logging.info('Creating server.cache.modulePath.js');
-	if (!process.version.startsWith('v6.')) {
+	if (!process.version.startsWith('v6.')
+		&& !process.version.startsWith('v8.')
+		&& !process.version.startsWith('v10.')) {
 		logging.error('Unsupported node version - server.cache.modulePath may not work correctly');
 	}
 	fs.writeFileSync(serverCacheModulePathJs, fs.readFileSync(serverCacheModulePathTemplateJs, 'utf8'));
@@ -191,7 +193,8 @@ function createServerCacheModulePathJs() {
 
 function createServerCacheStatJs() {
 	logging.info('Creating server.cache.stat.js');
-	if (!process.version.startsWith('v6.')) {
+	if (!process.version.startsWith('v6.')
+		&& !process.version.startsWith('v8.')) {
 		logging.error('Unsupported node version - server.cache.stat may not work correctly');
 	}
 	fs.writeFileSync(serverCacheStatJs, fs.readFileSync(serverCacheStatTemplateJs, 'utf8'));
@@ -478,6 +481,8 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'overrides\')', 'overrides');
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.development\')', 'config.development');
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.production\')', 'config.production');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing\')', 'config.testing');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing-mysql\')', 'config.testing-mysql');
 
 	// ghost default scheduler
 	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'adapters', 'scheduling'), 'SchedulingDefault' + '\'', 'SchedulingDefault');
