@@ -1,16 +1,16 @@
 {
 	"dependencies": {
 		"deasync": "^0.1.11",
-		"ghost": "1.23.1",
+		"ghost": "1.24.9",
 		"ghost-cli": "1.7.3",
-		"knex": "0.12.9",
-		"knex-migrator": "3.1.2",
+		"knex": "0.15.0",
+		"knex-migrator": "3.1.6",
 		"replace-in-file": "^3.0.0",
 		"str-replace-all": "^0.3.0",
 		"uglify-es": "^3.2.0"
 	},
 	"engines": {
-		"node": ">=6.11.1 <7"
+		"node": ">=8.16.0 <9"
 	},
 	"scripts": {
 		"postinstall": "node postinstall.js"
