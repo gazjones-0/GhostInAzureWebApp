@@ -9,22 +9,22 @@
     core-js "^2.6.5"
     regenerator-runtime "^0.13.2"
 
-"@nexes/mongo-knex@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@nexes/mongo-knex/-/mongo-knex-0.0.0.tgz#7a44a7263d8830c8416b90ba3c963c2c722e7b72"
+"@nexes/mongo-knex@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@nexes/mongo-knex/-/mongo-knex-0.0.1.tgz#141c8ca380e95c1460fe2abcd777d7fd2bb14e8f"
   dependencies:
     lodash "^4.17.10"
 
-"@nexes/nql-lang@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@nexes/nql-lang/-/nql-lang-0.0.0.tgz#eb0fb807aea8aa64d3d0b454f3d1167af394f39a"
-
-"@nexes/nql@0.0.1":
+"@nexes/nql-lang@0.0.1":
   version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@nexes/nql/-/nql-0.0.1.tgz#e8f5e5352badeffd67e371f22bccd41fa0c20c24"
+  resolved "https://registry.yarnpkg.com/@nexes/nql-lang/-/nql-lang-0.0.1.tgz#a13c023873f9bc11b9e4e284449c6cfbeccc8011"
+
+"@nexes/nql@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@nexes/nql/-/nql-0.1.0.tgz#b63614d5874bebb387b58d3f1b9fb9602115cf62"
   dependencies:
-    "@nexes/mongo-knex" "0.0.0"
-    "@nexes/nql-lang" "0.0.0"
+    "@nexes/mongo-knex" "0.0.1"
+    "@nexes/nql-lang" "0.0.1"
     mingo "2.2.2"
 
 "@samverschueren/stream-to-observable@^0.3.0":
@@ -318,12 +318,6 @@ async@^2.0.0, async@^2.1.4:
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.0.tgz#61a29abb6fcc026fea77e56d1c6ec53a795951f4"
   dependencies:
     lodash "^4.14.0"
-
-async@^2.5.0:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/async/-/async-2.6.2.tgz#18330ea7e6e313887f5d2f2a904bac6fe4dd5381"
-  dependencies:
-    lodash "^4.17.11"
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -873,7 +867,7 @@ commander@2.15.1:
   version "2.15.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.15.1.tgz#df46e867d0fc2aec66a34662b406a9ccafff5b0f"
 
-commander@^2.15.1, commander@^2.19.0, commander@^2.20.0, commander@~2.20.0:
+commander@^2.15.1, commander@^2.19.0, commander@^2.20.0:
   version "2.20.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.0.tgz#d58bb2b5c1ee8f87b0d340027e9e94e222c5a422"
 
@@ -1653,15 +1647,7 @@ express-brute@1.0.1, express-brute@^1.0.0:
     long-timeout "~0.1.1"
     underscore "~1.8.3"
 
-express-hbs@1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/express-hbs/-/express-hbs-1.0.5.tgz#6553b6bfcc55a965ee6161a6f374837f1eecea1f"
-  dependencies:
-    handlebars "4.0.13"
-    js-beautify "1.6.8"
-    readdirp "2.1.0"
-
-express-hbs@^1.0.3:
+express-hbs@1.0.4, express-hbs@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/express-hbs/-/express-hbs-1.0.4.tgz#c4480d6e8a9f8c23500d3b1a1394f17eae451786"
   dependencies:
@@ -2296,11 +2282,11 @@ ghost-storage-base@0.0.3:
   dependencies:
     moment "^2.19.3"
 
-ghost@1.25.7:
-  version "1.25.7"
-  resolved "https://registry.yarnpkg.com/ghost/-/ghost-1.25.7.tgz#67fbdf7ab87f58df4e0fd03cba6ba38fc6f1dfc2"
+ghost@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/ghost/-/ghost-2.0.3.tgz#f757123afecd7e2edc3691f8c1ecddce21c16bd2"
   dependencies:
-    "@nexes/nql" "0.0.1"
+    "@nexes/nql" "0.1.0"
     amperize "0.3.7"
     analytics-node "2.4.1"
     archiver "1.3.0"
@@ -2321,7 +2307,7 @@ ghost@1.25.7:
     downsize "0.0.8"
     express "4.16.3"
     express-brute "1.0.1"
-    express-hbs "1.0.5"
+    express-hbs "1.0.4"
     extract-zip "1.6.7"
     fs-extra "3.0.1"
     ghost-gql "0.0.10"
@@ -2329,7 +2315,7 @@ ghost@1.25.7:
     ghost-storage-base "0.0.3"
     glob "5.0.15"
     got "7.1.0"
-    gscan "1.5.0"
+    gscan "2.0.0"
     html-to-text "3.3.0"
     image-size "0.6.3"
     intl "1.2.5"
@@ -2337,7 +2323,7 @@ ghost@1.25.7:
     js-yaml "3.12.0"
     jsonpath "1.0.0"
     knex "0.14.6"
-    knex-migrator "3.1.6"
+    knex-migrator "3.2.3"
     lodash "4.17.10"
     markdown-it "8.4.1"
     markdown-it-footnote "3.0.1"
@@ -2352,7 +2338,7 @@ ghost@1.25.7:
     netjet "1.3.0"
     nodemailer "0.7.1"
     oauth2orize "1.11.0"
-    oembed-parser "1.1.1"
+    oembed-parser "https://github.com/kevinansfield/oembed-parser/tarball/448496419130fa4c6c40c2471b6403bc6025f36a"
     passport "0.4.0"
     passport-http-bearer "1.0.1"
     passport-oauth2-client-password "0.1.2"
@@ -2487,9 +2473,9 @@ graceful-fs@^4.1.10, graceful-fs@^4.1.2, graceful-fs@^4.1.6:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/graceful-readlink/-/graceful-readlink-1.0.1.tgz#4cafad76bc62f02fa039b2f94e9a3dd3a391a725"
 
-gscan@1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/gscan/-/gscan-1.5.0.tgz#b94446ab1ebc058c36e26f086ab0c0b97634832f"
+gscan@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/gscan/-/gscan-2.0.0.tgz#049e791ce3315359f7cd2280f0a334a88c22de77"
   dependencies:
     "@tryghost/extract-zip" "1.6.6"
     bluebird "^3.4.6"
@@ -2506,16 +2492,6 @@ gscan@1.5.0:
     semver "^5.3.0"
     uuid "^3.0.0"
     validator "^6.3.0"
-
-handlebars@4.0.13:
-  version "4.0.13"
-  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.0.13.tgz#89fc17bf26f46fd7f6f99d341d92efaae64f997d"
-  dependencies:
-    async "^2.5.0"
-    optimist "^0.6.1"
-    source-map "^0.6.1"
-  optionalDependencies:
-    uglify-js "^3.1.4"
 
 handlebars@4.0.6:
   version "4.0.6"
@@ -3201,16 +3177,16 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-knex-migrator@3.1.6:
-  version "3.1.6"
-  resolved "https://registry.yarnpkg.com/knex-migrator/-/knex-migrator-3.1.6.tgz#480928a060595045acd06253e245920a7bc9544b"
+knex-migrator@3.2.3:
+  version "3.2.3"
+  resolved "https://registry.yarnpkg.com/knex-migrator/-/knex-migrator-3.2.3.tgz#1b90b0a90891455734c064fb7432e84959be02ff"
   dependencies:
     bluebird "^3.4.6"
     commander "2.15.1"
     compare-ver "^2.0.2"
     debug "^2.2.0"
     ghost-ignition "2.9.2"
-    knex "^0.14.2"
+    knex "https://github.com/kirrg001/knex/tarball/d979ee6fa9b979e3be6f867dff015fdbc1f574ba"
     lodash "^4.16.4"
     moment "^2.19.3"
     nconf "^0.10.0"
@@ -3237,7 +3213,7 @@ knex-migrator@3.2.6:
     mysql "^2.16.0"
     sqlite3 "^4.0.6"
 
-knex@0.14.6, knex@^0.14.2:
+knex@0.14.6:
   version "0.14.6"
   resolved "https://registry.yarnpkg.com/knex/-/knex-0.14.6.tgz#ad57c4ef8fa1b51ebc8c37c2c9b483f6fb34e41e"
   dependencies:
@@ -3281,6 +3257,29 @@ knex@0.16.5, knex@^0.16.3:
     tildify "1.2.0"
     uuid "^3.3.2"
     v8flags "^3.1.2"
+
+"knex@https://github.com/kirrg001/knex/tarball/d979ee6fa9b979e3be6f867dff015fdbc1f574ba":
+  version "0.14.6"
+  resolved "https://github.com/kirrg001/knex/tarball/d979ee6fa9b979e3be6f867dff015fdbc1f574ba#31af3c65702c6d8fd459f5d68f6d0eaee27590a5"
+  dependencies:
+    babel-runtime "^6.26.0"
+    bluebird "^3.5.1"
+    chalk "2.3.2"
+    commander "^2.15.1"
+    debug "3.1.0"
+    inherits "~2.0.3"
+    interpret "^1.1.0"
+    liftoff "2.5.0"
+    lodash "^4.17.5"
+    minimist "1.2.0"
+    mkdirp "^0.5.1"
+    pg-connection-string "2.0.0"
+    readable-stream "2.3.6"
+    safe-buffer "^5.1.1"
+    tarn "^1.1.4"
+    tildify "1.2.0"
+    uuid "^3.2.1"
+    v8flags "^3.0.2"
 
 latest-version@4.0.0:
   version "4.0.0"
@@ -4180,9 +4179,9 @@ object.pick@^1.2.0, object.pick@^1.3.0:
   dependencies:
     isobject "^3.0.1"
 
-oembed-parser@1.1.1:
+"oembed-parser@https://github.com/kevinansfield/oembed-parser/tarball/448496419130fa4c6c40c2471b6403bc6025f36a":
   version "1.1.1"
-  resolved "https://registry.yarnpkg.com/oembed-parser/-/oembed-parser-1.1.1.tgz#6c7e8fb87faefbf99a9408f87325151e274aa80a"
+  resolved "https://github.com/kevinansfield/oembed-parser/tarball/448496419130fa4c6c40c2471b6403bc6025f36a#c6bf49487c4239e7c1cadd4a85c06714e1cf6dce"
   dependencies:
     bellajs "^7.2.2"
     node-fetch "^2.1.2"
@@ -5837,13 +5836,6 @@ uglify-js@^2.6:
     yargs "~3.10.0"
   optionalDependencies:
     uglify-to-browserify "~1.0.0"
-
-uglify-js@^3.1.4:
-  version "3.5.9"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.5.9.tgz#372fbf95939555b1f460b1777d33a67d4a994ac9"
-  dependencies:
-    commander "~2.20.0"
-    source-map "~0.6.1"
 
 uglify-to-browserify@~1.0.0:
   version "1.0.2"
