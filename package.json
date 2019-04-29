@@ -1,13 +1,13 @@
 {
 	"dependencies": {
-		"deasync": "^0.1.11",
-		"ghost": "1.24.9",
-		"ghost-cli": "1.7.3",
-		"knex": "0.15.0",
-		"knex-migrator": "3.1.6",
-		"replace-in-file": "^3.0.0",
+		"deasync": "^0.1.14",
+		"ghost": "1.25.7",
+		"ghost-cli": "1.9.4",
+		"knex": "0.16.5",
+		"knex-migrator": "3.2.6",
+		"replace-in-file": "^4.0.0",
 		"str-replace-all": "^0.3.0",
-		"uglify-es": "^3.2.0"
+		"uglify-es": "^3.3.9"
 	},
 	"engines": {
 		"node": ">=8.16.0 <9"
