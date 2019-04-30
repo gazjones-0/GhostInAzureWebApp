@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 
 // load our module path cache; if this is the first time the app has been run, the cache will be empty
-// and it'll be generated once ghost hast started (so subsequent startups will use the cache)
+// and it'll be generated once ghost has started (so subsequent startups will use the cache)
 require('./server.cache.modulePath');
 
 // load our stat cache; if this if the first time the app has been run, the cache will be empty and
