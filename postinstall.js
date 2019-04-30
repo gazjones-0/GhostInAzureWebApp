@@ -217,17 +217,25 @@ function processFileForServerCache(dir, file) {
 	// try and compress this file to minimize the cache size
 	var content = fs.readFileSync(path.resolve(dir, file), 'utf8');
 	var compressionSucceeded = false;
-	try
-	{
-		var compressedContent = uglifyJs.minify(
-			content,
-			{
-				compress: true,
-				mangle: true
-			});
-		compressionSucceeded = true;
-	} catch (err) {
-		// do nothing; uglify can't do all files so for any it can't we'll just add the file as-is
+
+	// compress depending on file type
+	if (file.endsWith('.js')) {
+		try
+		{
+			var compressedContent = uglifyJs.minify(
+				content,
+				{
+					compress: true,
+					mangle: true
+				});
+			compressionSucceeded = true;
+		} catch (err) {
+			// do nothing; uglify can't do all files so for any it can't we'll just add the file as-is
+		}
+	} else {
+		if (file.endsWith('.json')) {
+			content = JSON.stringify(JSON.parse(content));
+		}
 	}
 
 	// we use the full path as the array index, but to save space we remove anything that'll be the same for every entry and remove the extension
@@ -243,9 +251,13 @@ function processFileForServerCache(dir, file) {
 		&& (!(path.resolve(dir, file) === serverCacheStatJs))) {
 		// add the compressed file (or the uncompressed one if we couldn't compress it)
 		if ((compressionSucceeded === true) && (!compressedContent.error)) {
-			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(compressedContent.code) + '\';');
+			if (!isFileOneThatMustNotBeCached(arrayEntry)) {
+				serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(compressedContent.code) + '\';');
+			}
 		} else {
-			serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(content) + '\';');
+			if (!isFileOneThatMustNotBeCached(arrayEntry)) {
+				serverCacheItems.push(serverCacheVariableName + '[\'' + convertStringToCode(arrayEntry) + '\']=\'' + convertStringToCode(content) + '\';');
+			}
 		}
 		serverCacheFilesProcessed[path.resolve(dir, file)] = path.resolve(dir, file);
 	}
@@ -273,7 +285,7 @@ function processRequire(dir, match, requirePath) {
 		requirePath = requirePath.substring(0, requirePath.length - 5);
 	}
 
-	// if there are multiple reqires in the match, process each one individually
+	// if there are multiple requires in the match, process each one individually
 	while(requirePath !== '') {
 		var requirePathToProcess = requirePath;
 		if (match.endsWith('\')')) {
@@ -473,39 +485,6 @@ function attemptToProcessRequire(dir, file, style) {
 
 // some files get dynamically loaded, and so we won't pick them up; we just add these in here
 function addFilesThatCannotBeDetectedToServerCache() {
-	// ghost knex migrator config
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost'), 'MigratorConfig' + '\')', 'MigratorConfig');
-
-	// ghost built-in config
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'defaults\')', 'defaults');
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'overrides\')', 'overrides');
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.development\')', 'config.development');
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.production\')', 'config.production');
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing\')', 'config.testing');
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing-mysql\')', 'config.testing-mysql');
-
-	// ghost default scheduler
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'adapters', 'scheduling'), 'SchedulingDefault' + '\'', 'SchedulingDefault');
-
-	// ghost internal apps
-	var overrides = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'overrides.json'), 'utf8'));
-	overrides.apps.internal.forEach(function (app) {
-		processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'apps', app), 'index\')', 'index');
-	});
-	
-	// ghost data
-	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'init'));
-	addFilesInSubDirectoriesToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'versions'));
-	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'schema', 'fixtures'));
-
-	// ghost models
-	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'models'));
-	
-	// ghost themes built-in config
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'themes', 'config'), 'defaults\')', 'defaults');
-	
-	// ghost translations
-	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'translations'), 'en\')', 'en');
 
 	// bookshelf
 	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'bookshelf', 'lib', 'bookshelf.js')]) {
@@ -516,16 +495,52 @@ function addFilesThatCannotBeDetectedToServerCache() {
 	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'bookshelf-relations'));
 	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'bookshelf-relations', 'lib'));
 
-	// gscan
-	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'gscan', 'lib', 'checks'));
+	// ghost knex migrator config
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost'), 'MigratorConfig' + '\')', 'MigratorConfig');
 
-	// image-size
-	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types.js')]) {
-		var types = require(path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types.js'));
-		for(var type in types) {
-			processRequire(path.resolve(__dirname, 'node_modules', 'image-size', 'lib', 'types'), type + '\')', type);
-		};
-	}
+	// ghost adapters - default scheduler
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'adapters', 'scheduling'), 'SchedulingDefault' + '\'', 'SchedulingDefault');
+
+	// ghost apps
+	var overrides = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'overrides.json'), 'utf8'));
+	overrides.apps.internal.forEach(function (app) {
+		processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'apps', app), 'index\')', 'index');
+	});
+
+	// ghost config - built-in config
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'defaults.json\')', 'defaults.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config'), 'overrides.json\')', 'overrides.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.development.json\')', 'config.development.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.production.json\')', 'config.production.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing.json\')', 'config.testing.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'config', 'env'), 'config.testing-mysql.json\')', 'config.testing-mysql.json');
+
+	// ghost data
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'init'));
+	addFilesInSubDirectoriesToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'migrations', 'versions'));
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'schema', 'fixtures'));
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'data', 'schema'), 'default-settings.json\')', 'default-settings.json');
+
+	// ghost models
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'models'));
+	
+	// ghost services - built-in config
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'services', 'themes', 'config'), 'defaults.json\')', 'defaults.json');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'services', 'themes', 'engines'), 'defaults.json\')', 'defaults.json');
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'services', 'url', 'configs'));
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'services', 'routing', 'config'));
+
+	// ghost translations
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server', 'translations'), 'en.json\')', 'en.json');
+
+	// ghost dependencies
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'node_modules', 'bookshelf', 'lib', 'plugins'), 'registry\')', 'registry');
+	processRequire(path.resolve(__dirname, 'node_modules', 'ghost', 'node_modules', 'knex-migrator', 'node_modules', 'knex', 'lib', 'dialects', 'sqlite3'), 'index\')', 'index');
+
+	// gscan
+	processRequire(path.resolve(__dirname, 'node_modules', 'gscan'), 'package.json\')', 'package.json');
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'gscan', 'lib', 'checks'));
+	addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'gscan', 'lib', 'specs'));
 
 	// nconf
 	if (serverCacheFilesProcessed[path.resolve(__dirname, 'node_modules', 'nconf', 'lib', 'nconf.js')]) {
@@ -539,6 +554,12 @@ function addFilesThatCannotBeDetectedToServerCache() {
 		addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'oauth2orize', 'lib', 'exchange'));
 		addFilesInDirectoryToServerCache(path.resolve(__dirname, 'node_modules', 'oauth2orize', 'lib', 'grant'));
 	}
+
+	// oembed-parser
+	processRequire(path.resolve(__dirname, 'node_modules', 'oembed-parser', 'src', 'utils'), 'providers.json\')', 'providers.json');
+
+	// sqlite3
+	processRequire(path.resolve(__dirname, 'node_modules', 'sqlite3'), 'package.json\')', 'package.json');
 }
 
 // adds files in a directory to the server cache
@@ -557,6 +578,13 @@ function addFilesInSubDirectoriesToServerCache(dir) {
 			addFilesInDirectoryToServerCache(path.resolve(dir, filename));
 		}
 	});
+}
+
+function isFileOneThatMustNotBeCached(file) {
+	if (file === 'ghost\\node_modules\\knex\\lib\\util\\make-knex') {
+		return true;
+	}
+	return false;
 }
 
 // converts a string into an escaped javascript string
