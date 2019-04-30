@@ -36,6 +36,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 	createServerCacheJs();
 	createServerCacheModulePathJs();
 	createServerCacheStatJs();
+	copyGhostAdmin();
 } else {
 	// not running in Azure, so we should be running locally, only do post-install if we're not in production; if we're in
 	// production, but running locally, assume the user is doing something specific and is handling things themselves
@@ -46,6 +47,7 @@ if ((process.env.REGION_NAME) && (process.env.WEBSITE_SKU) && (!process.env.EMUL
 		createServerCacheJs();
 		createServerCacheModulePathJs();
 		createServerCacheStatJs();
+		copyGhostAdmin();
 	} else {
 		logging.warn('Don\'t appear to be running in Azure, skipping post-install as environment is currently ' + config.get('env'));
 		logging.warn('When repo is deployed to Azure the database in Azure will be automatically migrated to the latest version so you don\'t need to; if you still wish to migrate the local database to the latest version use node dbmigrate.js');
@@ -598,3 +600,19 @@ function convertStringToCode(content) {
 	content = strReplaceAll('\'', '\\\'', content);
 	return content;
 };
+
+// copies the built Ghost-Admin to the Ghost installation
+function copyGhostAdmin() {
+	copyFilesInSubDirectory(path.resolve(__dirname, 'core', 'built'), path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'built'));
+	copyFilesInSubDirectory(path.resolve(__dirname, 'core', 'server'), path.resolve(__dirname, 'node_modules', 'ghost', 'core', 'server'));
+}
+
+function copyFilesInSubDirectory(src, dst) {
+	fs.readdirSync(src).forEach(function(filename) {
+		if (fs.statSync(path.resolve(src, filename)).isDirectory()) {
+			copyFilesInSubDirectory(path.resolve(src, filename), path.resolve(dst, filename));
+		} else {
+			fs.copyFileSync(path.resolve(src, filename), path.resolve(dst, filename));
+		}
+	});
+}
